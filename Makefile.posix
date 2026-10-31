@@ -1,0 +1,4 @@
+GNU_INSTALL_ROOT ?= /usr
+GNU_VERSION      ?=
+GNU_PREFIX       ?= arm-none-eabi
+SDK_ROOT         := $(PROJ_DIR)/SDK/17.1.0_ddde560
