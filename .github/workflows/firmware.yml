@@ -1,0 +1,48 @@
+name: Firmware
+
+on:
+  push:
+    branches:
+      - mainline
+      - build/step1
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y make gcc-arm-none-eabi python3-pip
+
+      - name: Build
+        run: make -f Makefile.nRF52 -j4
+
+      - name: Report size
+        run: arm-none-eabi-size _build/nrf52811_xxaa.elf
+
+      - name: Package DFU zip
+        run: |
+          set -e
+          VERSION=$(cat firmware-version.txt | tr -d '[:space:]')
+          pip3 install --user "nrfutil==6.1.7"
+          export PATH="$HOME/.local/bin:$PATH"
+          nrfutil pkg generate \
+            --hw-version 52 \
+            --sd-req 0x126 \
+            --sd-id 0x126 \
+            --application _build/nrf52811_xxaa.hex \
+            --application-version "$VERSION" \
+            --key-file tools/priv.pem \
+            "epd-${VERSION}-ota.zip"
+          ls -l "epd-${VERSION}-ota.zip"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: firmware-${{ github.ref_name }}
+          path: |
+            _build/nrf52811_xxaa.hex
+            epd-*-ota.zip
