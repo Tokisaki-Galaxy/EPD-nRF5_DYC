@@ -320,8 +320,8 @@ static void Draw7Number(Adafruit_GFX *gfx, int n, unsigned int xLoc, unsigned in
 static void DrawTime(Adafruit_GFX* gfx, tm_t* tm, int16_t x, int16_t y, uint16_t cS, uint16_t nD) {
     Draw7Number(gfx, tm->tm_hour, x, y, cS, GFX_BLACK, GFX_WHITE, nD);
     x += (nD * (11 * cS + 2) - 2 * cS) + 2 * cS;
-    GFX_fillRect(gfx, x, y + 4.5 * cS + 1, 2 * cS, 2 * cS, GFX_BLACK);
-    GFX_fillRect(gfx, x, y + 13.5 * cS + 3, 2 * cS, 2 * cS, GFX_BLACK);
+    GFX_fillRect(gfx, x, y + (9 * cS) / 2 + 1, 2 * cS, 2 * cS, GFX_BLACK);
+    GFX_fillRect(gfx, x, y + (27 * cS) / 2 + 3, 2 * cS, 2 * cS, GFX_BLACK);
     x += 4 * cS;
     Draw7Number(gfx, tm->tm_min, x, y, cS, GFX_BLACK, GFX_WHITE, nD);
 }
