@@ -13,10 +13,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
       - name: Install toolchain
         run: |
           sudo apt-get update
-          sudo apt-get install -y make gcc-arm-none-eabi python3-pip
+          sudo apt-get install -y make gcc-arm-none-eabi
 
       - name: Configure toolchain paths
         run: cp Makefile.posix SDK/17.1.0_ddde560/components/toolchain/gcc/Makefile.posix
@@ -25,15 +29,15 @@ jobs:
         run: make -f Makefile.nRF52 -j4
 
       - name: Report size
-        run: arm-none-eabi-size _build/nrf52811_xxaa.out
+        run: |
+          arm-none-eabi-size _build/nrf52811_xxaa.out
           arm-none-eabi-nm --size-sort --radix=d _build/nrf52811_xxaa.out | tail -25
 
       - name: Package DFU zip
         run: |
           set -e
-          VERSION=$(cat firmware-version.txt | tr -d '[:space:]')
-          pip3 install --user "nrfutil==6.1.7"
-          export PATH="$HOME/.local/bin:$PATH"
+          VERSION=$(tr -d '[:space:]' < firmware-version.txt)
+          python -m pip install "nrfutil==6.1.7"
           nrfutil pkg generate \
             --hw-version 52 \
             --sd-req 0x126 \
@@ -50,4 +54,3 @@ jobs:
           path: |
             _build/nrf52811_xxaa.hex
             epd-*-ota.zip
-
