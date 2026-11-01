@@ -50,10 +50,14 @@ jobs:
             "epd-${VERSION}-ota.zip"
           ls -l "epd-${VERSION}-ota.zip"
 
+      - name: Sanitize branch name
+        run: echo "ARTIFACT=${GITHUB_REF_NAME//\//-}" >> $GITHUB_ENV
+
       - uses: actions/upload-artifact@v4
         with:
-          name: firmware-${{ github.ref_name }}
+          name: firmware-${{ env.ARTIFACT }}
           path: |
             _build/nrf52811_xxaa.hex
             epd-*-ota.zip
+
 
