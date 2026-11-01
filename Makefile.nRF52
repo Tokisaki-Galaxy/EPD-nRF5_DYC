@@ -115,7 +115,7 @@ INC_FOLDERS += \
 LIB_FILES += \
 
 # Optimization flags
-OPT = -Os -flto
+OPT = -Os -flto -fno-unwind-tables -fno-asynchronous-unwind-tables
 # Uncomment the line below to enable link time optimization
 #OPT += -flto
 
@@ -135,6 +135,7 @@ CFLAGS += -DS112
 CFLAGS += -DSOFTDEVICE_PRESENT
 CFLAGS += -mcpu=cortex-m4
 CFLAGS += -mthumb -mabi=aapcs
+CFLAGS += -DNDEBUG
 CFLAGS += -Wall -Werror
 # SDK 17.1's BOOTLOADER_ADDRESS macro trips -Warray-bounds on GCC 9+
 CFLAGS += -Wno-error=array-bounds
@@ -173,9 +174,9 @@ LDFLAGS += -Wl,--gc-sections
 # use newlib in nano version
 LDFLAGS += --specs=nano.specs
 
-nrf52811_xxaa: CFLAGS += -D__HEAP_SIZE=512
+nrf52811_xxaa: CFLAGS += -D__HEAP_SIZE=2048
 nrf52811_xxaa: CFLAGS += -D__STACK_SIZE=2048
-nrf52811_xxaa: ASMFLAGS += -D__HEAP_SIZE=1024
+nrf52811_xxaa: ASMFLAGS += -D__HEAP_SIZE=2048
 nrf52811_xxaa: ASMFLAGS += -D__STACK_SIZE=2048
 
 # Add standard libraries at the very end of the linker input, after all objects
@@ -218,6 +219,8 @@ flash_softdevice:
 
 erase:
 	nrfjprog -f nrf52 --eraseall
+
+
 
 
 
