@@ -26,7 +26,9 @@ jobs:
         run: cp Makefile.posix SDK/17.1.0_ddde560/components/toolchain/gcc/Makefile.posix
 
       - name: Build
-        run: make -f Makefile.nRF52 -j4
+        run: |
+          cp Makefile.nRF52 Makefile
+          make -j4
 
       - name: Report size
         run: |
@@ -54,3 +56,4 @@ jobs:
           path: |
             _build/nrf52811_xxaa.hex
             epd-*-ota.zip
+
