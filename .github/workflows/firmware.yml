@@ -25,7 +25,8 @@ jobs:
         run: make -f Makefile.nRF52 -j4
 
       - name: Report size
-        run: arm-none-eabi-size _build/nrf52811_xxaa.elf
+        run: arm-none-eabi-size _build/nrf52811_xxaa.out
+          arm-none-eabi-nm --size-sort --radix=d _build/nrf52811_xxaa.out | tail -25
 
       - name: Package DFU zip
         run: |
@@ -49,3 +50,4 @@ jobs:
           path: |
             _build/nrf52811_xxaa.hex
             epd-*-ota.zip
+
