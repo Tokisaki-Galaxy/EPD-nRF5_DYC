@@ -129,12 +129,12 @@ static void DrawTimeSyncTip(Adafruit_GFX* gfx, gui_data_t* data) {
     GFX_printf(gfx, url);
 }
 
-static void DrawBattery(Adafruit_GFX* gfx, int16_t x, int16_t y, uint8_t iw, float voltage) {
+static void DrawBattery(Adafruit_GFX* gfx, int16_t x, int16_t y, uint8_t iw, uint16_t voltage) {
     x -= iw;
-    uint8_t level = (uint8_t)(voltage * 100 / 3.6f);
+    uint8_t level = (uint8_t)((uint32_t)voltage * 100 / 3600);
     GFX_setFont(gfx, u8g2_font_wqy9_t_lunar);
     GFX_setCursor(gfx, x - GFX_getUTF8Width(gfx, "3.2V") - 2, y + 9);
-    GFX_printf(gfx, "%.1fV", voltage);
+    GFX_printf(gfx, "%d.%dV", voltage / 1000, (voltage % 1000) / 100);
     GFX_fillRect(gfx, x, y, iw, 10, GFX_WHITE);
     GFX_drawRect(gfx, x, y, iw, 10, GFX_BLACK);
     GFX_fillRect(gfx, x + iw, y + 4, 2, 2, GFX_BLACK);
