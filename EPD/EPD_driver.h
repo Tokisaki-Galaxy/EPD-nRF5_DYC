@@ -215,7 +215,7 @@ void EPD_LED_Toggle(void);
 void EPD_LED_BLINK(void);
 
 // VDD voltage
-float EPD_ReadVoltage(void);
+uint16_t EPD_ReadVoltage(void);
 
 epd_model_t* epd_init(epd_model_id_t id);
 
