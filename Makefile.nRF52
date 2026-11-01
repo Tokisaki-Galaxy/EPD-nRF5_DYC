@@ -7,7 +7,7 @@ SDK_ROOT := $(PROJ_DIR)/SDK/17.1.0_ddde560
 SD_PATH  := $(SDK_ROOT)/components/softdevice/s112
 
 $(OUTPUT_DIRECTORY)/nrf52811_xxaa.out: \
-  LINKER_SCRIPT  := $(SDK_ROOT)/gcc_nrf52.ld
+  LINKER_SCRIPT  := $(PROJ_DIR)/gcc_nrf52_64k.ld
 
 # Source files common to all targets
 SRC_FILES += \
@@ -147,6 +147,7 @@ CFLAGS += -DSOFTDEVICE_PRESENT
 CFLAGS += -mcpu=cortex-m4
 CFLAGS += -mthumb -mabi=aapcs
 CFLAGS += -Wall -Werror
+CFLAGS += -Wno-error=array-bounds
 CFLAGS += -mfloat-abi=soft
 # keep every function in a separate section, this allows linker to discard unused ones
 CFLAGS += -ffunction-sections -fdata-sections -fno-strict-aliasing
