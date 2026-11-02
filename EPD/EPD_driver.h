@@ -215,6 +215,10 @@ uint8_t EPD_ReadByte(void);
     } while (0)
 void EPD_FillRAM(uint8_t cmd, uint8_t value, uint32_t len);
 void EPD_Reset(bool status, uint16_t duration);
+
+/** @brief Hold RST high and keep the pins driven so the controller keeps its
+ *         frame buffers while VDD stays on. */
+void EPD_KeepPanelRam(void);
 bool EPD_ReadBusy(void);
 void EPD_WaitBusy(bool status, uint16_t timeout);
 

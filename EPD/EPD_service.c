@@ -110,8 +110,7 @@ static void on_disconnect(ble_epd_t* p_epd, ble_evt_t* p_ble_evt) {
         // high because a low level would reset the controller and wipe the RAM.
         EPD_WriteCmd(UC81xx_POF);
         nrf_delay_ms(100);
-        digitalWrite(EPD_RST_PIN, HIGH);
-        pinMode(EPD_RST_PIN, OUTPUT);
+        EPD_KeepPanelRam();
     } else {
         EPD_GPIO_Uninit();
     }

@@ -199,6 +199,11 @@ void EPD_Reset(bool status, uint16_t duration) {
 
 bool EPD_ReadBusy(void) { return digitalRead(EPD_BUSY_PIN); }
 
+void EPD_KeepPanelRam(void) {
+    pinMode(EPD_RST_PIN, OUTPUT);
+    digitalWrite(EPD_RST_PIN, HIGH);
+}
+
 void EPD_WaitBusy(bool status, uint16_t timeout) {
     uint32_t led_status = digitalRead(EPD_LED_PIN);
 
