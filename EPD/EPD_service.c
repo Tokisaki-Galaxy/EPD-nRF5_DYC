@@ -218,7 +218,7 @@ static void epd_service_on_write(ble_epd_t* p_epd, uint8_t* p_data, uint16_t len
             }
             otp_dump.offset += sizeof(otp_chunk);
 
-            if (otp_dump.offset >= 0x1000) {
+            if (otp_dump.offset >= 0x1800) {
                 EPD_WriteCmd(UC81xx_POF);
                 nrf_delay_ms(100);
                 otp_dump.active = false;
