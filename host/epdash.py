@@ -104,6 +104,10 @@ class Panel:
         if data is not None:
             await self.c.write_gatt_char(CMD, pkt(0x04, bytes(data)), response=True)
 
+    async def init(self):
+        """服务层 0x01, 复位面板并重建寄存器状态."""
+        await self.c.write_gatt_char(CMD, pkt(0x01), response=True)
+
     async def window(self, x0, y0, x1, y1):
         x0 &= 0xFFF8
         x1 |= 7
@@ -116,7 +120,7 @@ class Panel:
 
     async def ask(self, code, prefix, timeout=3.0):
         self.notes.clear()
-        await self.c.write_gatt_char(CMD, pkt(0x03, [code]), response=True)
+        await self.c.write_gatt_char(CMD, pkt(code), response=True)
         loops = int(timeout / 0.05)
         for _ in range(loops):
             for note in self.notes:
@@ -184,7 +188,7 @@ async def push(frame_old, frame_new, force_full):
             box = (0, 0, W - 1, H - 1)
 
         if do_full:
-            await p.cmd(0x01)
+            await p.init()
             await asyncio.sleep(0.8)
             await p.cmd(0x00, [0x3F])
             await p.cmd(0x50, [0xA9, 0x07])

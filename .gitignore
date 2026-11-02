@@ -92,3 +92,5 @@ RTE_Components.h
 EventRecorderStub.scvd
 JLinkLog.txt
 host/.epdash_state.npz
+
+dashboard/refresh.log
