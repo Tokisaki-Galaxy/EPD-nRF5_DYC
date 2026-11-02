@@ -82,6 +82,7 @@ enum EPD_CMDS {
     EPD_CMD_DUMP_OTP = 0x35,    /**< dump panel OTP through notifications */
     EPD_CMD_REFRESH_RAW = 0x36, /**< DRF on the current window, no reset */
     EPD_CMD_PROBE = 0x37,       /**< report temperature and VDD */
+    EPD_CMD_READ_DATA = 0x38,   /**< read N bytes back from the panel */
 };
 
 /**@brief EPD Service structure.
