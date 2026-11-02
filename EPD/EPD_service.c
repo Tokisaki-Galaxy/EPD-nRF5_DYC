@@ -189,6 +189,39 @@ static void epd_service_on_write(ble_epd_t* p_epd, uint8_t* p_data, uint16_t len
             if (p_epd->epd) p_epd->epd->drv->sleep(p_epd->epd);
             break;
 
+        case EPD_CMD_DUMP_OTP: {
+            if (!p_epd->epd) return;
+            EPD_Reset(true, 10);
+            EPD_WriteCmd(UC81xx_PON);
+            nrf_delay_ms(200);
+            EPD_Write(UC81xx_ROTP, 0x00);
+            nrf_delay_ms(50);
+            static uint8_t otp[128];
+            for (uint16_t off = 0; off < 0x1000; off += sizeof(otp)) {
+                EPD_ReadData(otp, sizeof(otp));
+                ble_epd_string_send(p_epd, otp, sizeof(otp));
+                nrf_delay_ms(10);
+            }
+            EPD_WriteCmd(UC81xx_POF);
+            nrf_delay_ms(100);
+            break;
+        }
+
+        case EPD_CMD_REFRESH_RAW:
+            EPD_WriteCmd(UC81xx_DRF);
+            nrf_delay_ms(100);
+            EPD_WaitBusy(false, 30000);
+            break;
+
+        case EPD_CMD_PROBE: {
+            char buf[40] = {0};
+            int8_t t = p_epd->epd ? p_epd->epd->drv->read_temp(p_epd->epd) : -99;
+            uint16_t v = EPD_ReadVoltage();
+            snprintf(buf, sizeof(buf), "temp=%d mv=%d", t, v);
+            ble_epd_string_send(p_epd, (uint8_t*)buf, strlen(buf));
+            break;
+        }
+
         case EPD_CMD_SET_TIME: {
             if (length < 5) return;
 
