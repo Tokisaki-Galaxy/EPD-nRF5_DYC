@@ -24,6 +24,11 @@
 #include "nrf_pwr_mgmt.h"
 #include "sdk_macros.h"
 
+// True once the controller has been initialized in this boot and no deep sleep
+// has been issued since. The host uses it to decide between a full and a
+// partial refresh after reconnecting.
+static bool s_panel_ram_valid = false;
+
 #if defined(S112)
 #define EPD_CFG_52811 {0x14, 0x13, 0x06, 0x05, 0x04, 0x03, 0x02, 0x02, 0xFF, 0x12, 0x07}
 #define EPD_CFG_52810 {0x14, 0x13, 0x12, 0x11, 0x10, 0x0F, 0x0E, 0x02, 0xFF, 0x0D, 0x02}
@@ -161,6 +166,7 @@ static void epd_service_on_write(ble_epd_t* p_epd, uint8_t* p_data, uint16_t len
 
         case EPD_CMD_INIT:
             p_epd->epd = epd_init((epd_model_id_t)(length > 1 ? p_data[1] : p_epd->config.model_id));
+            s_panel_ram_valid = true;
             if (p_epd->epd->id != p_epd->config.model_id) {
                 p_epd->config.model_id = p_epd->epd->id;
                 epd_config_write(&p_epd->config);
@@ -192,7 +198,10 @@ static void epd_service_on_write(ble_epd_t* p_epd, uint8_t* p_data, uint16_t len
             break;
 
         case EPD_CMD_SLEEP:
-            if (p_epd->epd) p_epd->epd->drv->sleep(p_epd->epd);
+            if (p_epd->epd) {
+                p_epd->epd->drv->sleep(p_epd->epd);
+                s_panel_ram_valid = false;
+            }
             break;
 
         case EPD_CMD_DUMP_OTP: {
@@ -249,9 +258,17 @@ static void epd_service_on_write(ble_epd_t* p_epd, uint8_t* p_data, uint16_t len
             for (uint16_t i = 0; i < 500 && EPD_ReadBusy(); i++) nrf_delay_ms(1);
             EPD_WaitBusy(false, 30000);
             uint32_t ticks = app_timer_cnt_diff_compute(app_timer_cnt_get(), start);
-            uint32_t ms = (uint32_t)(((uint64_t)ticks * 1000u) / 32768u);
+            // APP_TIMER_CONFIG_RTC_FREQUENCY is 1, so the counter runs at 16384 Hz.
+            uint32_t ms = (uint32_t)(((uint64_t)ticks * 1000u) / 16384u);
             char buf[24] = {0};
             snprintf(buf, sizeof(buf), "ms=%lu", (unsigned long)ms);
+            ble_epd_string_send(p_epd, (uint8_t*)buf, strlen(buf));
+            break;
+        }
+
+        case EPD_CMD_QUERY_STATE: {
+            char buf[20] = {0};
+            snprintf(buf, sizeof(buf), "ready=%d", s_panel_ram_valid ? 1 : 0);
             ble_epd_string_send(p_epd, (uint8_t*)buf, strlen(buf));
             break;
         }

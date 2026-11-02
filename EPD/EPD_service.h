@@ -84,6 +84,7 @@ enum EPD_CMDS {
     EPD_CMD_PROBE = 0x37,       /**< report temperature and VDD */
     EPD_CMD_READ_DATA = 0x38,   /**< read N bytes back from the panel */
     EPD_CMD_REFRESH_TIMED = 0x39, /**< DRF with a device-side millisecond report */
+    EPD_CMD_QUERY_STATE = 0x3A,   /**< report whether the panel RAM holds a valid frame */
 };
 
 /**@brief EPD Service structure.
