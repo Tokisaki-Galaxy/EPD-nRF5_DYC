@@ -205,9 +205,12 @@ async def push(frame_old, frame_new, force_full, clean=False):
             await p.window(*box)
             await p.cmd(0x13)
             sent = await p.send(crop(frame_new, *box))
-            await p.cmd(0x92)
 
         ms = await p.refresh()
+        if not do_full:
+            # PTOUT must come after the refresh. Sending it before DRF exits
+            # partial mode and makes the controller scan the whole panel.
+            await p.cmd(0x92)
         print("刷新耗时 %d ms, 传输 %d 字节" % (ms, sent))
         np.savez(STATE, frame=frame_new, count=(0 if do_full else state_count + 1), ready=True)
     finally:
