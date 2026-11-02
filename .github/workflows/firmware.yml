@@ -5,6 +5,7 @@ on:
     branches:
       - mainline
       - build/step1
+      - dashboard
   workflow_dispatch:
 
 jobs:

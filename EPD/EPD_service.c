@@ -15,6 +15,7 @@
 #include <string.h>
 
 #include "app_scheduler.h"
+#include "app_timer.h"
 #include "ble_srv_common.h"
 #include "main.h"
 #include "nrf_delay.h"
@@ -104,10 +105,16 @@ static void on_disconnect(ble_epd_t* p_epd, ble_evt_t* p_ble_evt) {
     UNUSED_PARAMETER(p_ble_evt);
     p_epd->conn_handle = BLE_CONN_HANDLE_INVALID;
     if (p_epd->epd) {
-        p_epd->epd->drv->sleep(p_epd->epd);
-        nrf_delay_ms(200);  // for sleep
+        // Power the booster down but stay out of deep sleep, so the panel keeps
+        // its NEW/OLD frame buffers for the next partial update. RST is held
+        // high because a low level would reset the controller and wipe the RAM.
+        EPD_WriteCmd(UC81xx_POF);
+        nrf_delay_ms(100);
+        digitalWrite(EPD_RST_PIN, HIGH);
+        pinMode(EPD_RST_PIN, OUTPUT);
+    } else {
+        EPD_GPIO_Uninit();
     }
-    EPD_GPIO_Uninit();
 }
 
 static void epd_update_display_mode(ble_epd_t* p_epd, display_mode_t mode) {
@@ -229,9 +236,26 @@ static void epd_service_on_write(ble_epd_t* p_epd, uint8_t* p_data, uint16_t len
 
         case EPD_CMD_REFRESH_RAW:
             EPD_WriteCmd(UC81xx_DRF);
-            nrf_delay_ms(100);
+            nrf_delay_ms(20);
+            // BUSY_N needs a moment to assert. Without this the generic wait
+            // sees an already released line and returns immediately.
+            for (uint16_t i = 0; i < 500 && EPD_ReadBusy(); i++) nrf_delay_ms(1);
             EPD_WaitBusy(false, 30000);
             break;
+
+        case EPD_CMD_REFRESH_TIMED: {
+            uint32_t start = app_timer_cnt_get();
+            EPD_WriteCmd(UC81xx_DRF);
+            nrf_delay_ms(20);
+            for (uint16_t i = 0; i < 500 && EPD_ReadBusy(); i++) nrf_delay_ms(1);
+            EPD_WaitBusy(false, 30000);
+            uint32_t ticks = app_timer_cnt_diff_compute(app_timer_cnt_get(), start);
+            uint32_t ms = (uint32_t)(((uint64_t)ticks * 1000u) / 32768u);
+            char buf[24] = {0};
+            snprintf(buf, sizeof(buf), "ms=%lu", (unsigned long)ms);
+            ble_epd_string_send(p_epd, (uint8_t*)buf, strlen(buf));
+            break;
+        }
 
         case EPD_CMD_PROBE: {
             char buf[40] = {0};

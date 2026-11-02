@@ -83,6 +83,7 @@ enum EPD_CMDS {
     EPD_CMD_REFRESH_RAW = 0x36, /**< DRF on the current window, no reset */
     EPD_CMD_PROBE = 0x37,       /**< report temperature and VDD */
     EPD_CMD_READ_DATA = 0x38,   /**< read N bytes back from the panel */
+    EPD_CMD_REFRESH_TIMED = 0x39, /**< DRF with a device-side millisecond report */
 };
 
 /**@brief EPD Service structure.
