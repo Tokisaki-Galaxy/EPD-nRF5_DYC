@@ -117,6 +117,7 @@ class Panel:
     async def send(self, data):
         for i in range(0, len(data), 200):
             await self.c.write_gatt_char(CMD, pkt(0x04, data[i:i + 200]), response=True)
+        return len(data)
 
     async def ask(self, code, prefix, timeout=3.0):
         self.notes.clear()
@@ -148,7 +149,7 @@ class Panel:
         await self.cmd(0x25, bytes(42))
 
 
-async def push(frame_old, frame_new, force_full):
+async def push(frame_old, frame_new, force_full, clean=False):
     state_count = 0
     ready = False
     if STATE.exists():
@@ -195,19 +196,19 @@ async def push(frame_old, frame_new, force_full):
             await p.lut(partial=False)
             await p.window(0, 0, W - 1, H - 1)
             await p.cmd(0x13)
-            await p.send(frame_new.tobytes())
+            sent = await p.send(frame_new.tobytes())
         else:
             await p.cmd(0x04)          # 上电, 不复位
             await asyncio.sleep(0.2)
-            await p.lut(partial=True)
+            await p.lut(partial=not clean)
             await p.cmd(0x91)
             await p.window(*box)
             await p.cmd(0x13)
-            await p.send(crop(frame_new, *box))
+            sent = await p.send(crop(frame_new, *box))
             await p.cmd(0x92)
 
         ms = await p.refresh()
-        print("刷新耗时 %d ms" % ms)
+        print("刷新耗时 %d ms, 传输 %d 字节" % (ms, sent))
         np.savez(STATE, frame=frame_new, count=(0 if do_full else state_count + 1), ready=True)
     finally:
         await client.disconnect()
@@ -217,6 +218,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("image")
     ap.add_argument("--full", action="store_true")
+    ap.add_argument("--clean", action="store_true", help="窗口内用完整波形, 不保留旧像素")
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
 
@@ -234,7 +236,7 @@ def main():
     print("差分框:", box)
     if args.dry_run:
         return
-    asyncio.run(push(old, new, args.full))
+    asyncio.run(push(old, new, args.full, args.clean))
 
 
 if __name__ == "__main__":

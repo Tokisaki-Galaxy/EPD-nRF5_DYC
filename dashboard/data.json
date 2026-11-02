@@ -1,15 +1,15 @@
 {
  "city": "辽宁本溪溪湖区",
- "date": "11月01日",
- "week": "周日",
+ "date": "11月02日",
+ "week": "周一",
  "calendar": {
-  "daysLeft": 60,
+  "daysLeft": 59,
   "holiday": {
    "name": "元旦",
-   "days": 61
+   "days": 60
   }
  },
- "lunar": "农历九月廿三 · 距立冬 6 天",
+ "lunar": "农历九月廿四 · 距立冬 5 天",
  "weather": {
   "temp": 8,
   "feels": 8,
@@ -47,7 +47,7 @@
  "markets": [
   {
    "name": "沪深300",
-   "price": "3985.50",
+   "price": "3196.05",
    "change": -1.39,
    "prevClose": 4041.84,
    "daily": [
@@ -539,7 +539,7 @@
   },
   {
    "name": "中证500",
-   "price": "6266.19",
+   "price": "5912.80",
    "change": -2.91,
    "prevClose": 6453.72,
    "daily": [
@@ -1031,7 +1031,7 @@
   },
   {
    "name": "黄金ETF",
-   "price": "8.115",
+   "price": "7.654",
    "change": -1.33,
    "prevClose": 8.224,
    "daily": [
@@ -1524,9 +1524,9 @@
  ],
  "breaking": [],
  "tokens": {
-  "today": 324039910,
-  "week": 3939755310,
-  "avg": 562822187,
+  "today": 9876543,
+  "week": 3692722576,
+  "avg": 527531796,
   "model": "deepseek-flash"
  }
 }
