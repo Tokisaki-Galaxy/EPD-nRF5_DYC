@@ -1,0 +1,1064 @@
+<!doctype html>
+<html lang="zh-CN">
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=856">
+	<title>墨水屏仪表盘 800x480 三色</title>
+	<style>
+		/* ==========================================================
+		   设计约束（三色墨水屏 UC8179 800x480）
+		   - 只允许纯黑 #000、纯白 #fff、纯红 #d0021b 三种颜色
+		   - 不使用透明度、渐变、阴影、灰度值，灰度会被阈值吃掉
+		   - 不使用圆角，曲线抗锯齿后会被压成硬边
+		   - 字号下限 10px，正文 14px 以上，1px 线在屏幕上约 0.2mm
+		   ========================================================== */
+
+		:root {
+			--ink: #000;
+			--paper: #fff;
+			--red: #d0021b;
+			--sans: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", "Source Han Sans SC", sans-serif;
+			--num: "Bahnschrift", "DIN Alternate", "Microsoft YaHei", Arial, sans-serif;
+		}
+
+		* {
+			box-sizing: border-box;
+			margin: 0;
+			padding: 0;
+		}
+
+		html,
+		body {
+			background: var(--paper);
+			color: var(--ink);
+		}
+
+		body {
+			width: 856px;
+			display: flex;
+			align-items: flex-start;
+			font-family: var(--sans);
+			-webkit-user-select: none;
+			user-select: none;
+		}
+
+		body.clean {
+			width: 800px;
+		}
+
+		.page {
+			width: 800px;
+			height: 480px;
+			flex: 0 0 800px;
+			padding: 12px 14px 10px;
+			display: flex;
+			flex-direction: column;
+			overflow: hidden;
+			background: var(--paper);
+		}
+
+		/* ---------- 页眉 ---------- */
+		.hdr {
+			height: 104px;
+			flex: 0 0 104px;
+			display: flex;
+			align-items: center;
+			gap: 16px;
+			padding-bottom: 9px;
+			border-bottom: 3px solid var(--ink);
+		}
+
+		.hdr-left {
+			flex: 0 0 224px;
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			gap: 6px;
+			min-width: 0;
+		}
+
+		.date {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			line-height: 1;
+		}
+
+		.date b {
+			font-family: var(--num);
+			font-size: 24px;
+			font-weight: 700;
+			letter-spacing: -0.5px;
+			white-space: nowrap;
+		}
+
+		.week {
+			font-size: 12px;
+			font-weight: 700;
+			line-height: 1;
+			border: 2px solid var(--ink);
+			padding: 3px 5px 2px;
+			white-space: nowrap;
+		}
+
+		.week.end {
+			color: var(--red);
+			border-color: var(--red);
+		}
+
+		.slot {
+			display: flex;
+			align-items: baseline;
+			gap: 3px;
+			border-left: 1px solid var(--ink);
+			padding-left: 7px;
+			margin-left: 1px;
+			white-space: nowrap;
+		}
+
+		.slot b {
+			font-family: var(--num);
+			font-size: 15px;
+			font-weight: 700;
+			letter-spacing: 0.3px;
+		}
+
+		.lunar {
+			font-size: 11px;
+			letter-spacing: 0.2px;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
+		.cal {
+			display: flex;
+			align-items: baseline;
+			gap: 6px;
+			font-size: 11px;
+			white-space: nowrap;
+			overflow: hidden;
+		}
+
+		.cal b {
+			font-family: var(--num);
+			font-size: 13px;
+			font-weight: 700;
+		}
+
+		.cal i {
+			font-style: normal;
+			font-size: 11px;
+		}
+
+		.warn {
+			display: none;
+			align-self: flex-start;
+			max-width: 100%;
+			font-size: 11px;
+			font-weight: 700;
+			line-height: 1;
+			color: var(--paper);
+			background: var(--red);
+			padding: 5px 7px 4px;
+			white-space: nowrap;
+			overflow: hidden;
+		}
+
+		.warn.on {
+			display: block;
+		}
+
+		.hdr-wx {
+			flex: 1;
+			min-width: 0;
+			display: grid;
+			grid-template-columns: repeat(4, 1fr);
+			column-gap: 10px;
+			row-gap: 3px;
+			align-content: center;
+		}
+
+		.wx-b {
+			display: flex;
+			flex-direction: column;
+			gap: 3px;
+			border-left: 1px solid var(--ink);
+			padding-left: 9px;
+			min-width: 0;
+		}
+
+		.wx-b:nth-child(4n + 1) {
+			border-left: none;
+			padding-left: 0;
+		}
+
+		.wx-b span {
+			font-size: 11px;
+			line-height: 1;
+		}
+
+		.wx-b span b {
+			font-weight: 700;
+		}
+
+		#a-aqi-label {
+			white-space: nowrap;
+			overflow: hidden;
+		}
+
+		.aqi-suf {
+			font-style: normal;
+			font-size: 10px;
+			margin-left: 4px;
+			letter-spacing: 0.5px;
+		}
+
+		.wx-b > b {
+			font-family: var(--num);
+			font-size: 22px;
+			font-weight: 700;
+			line-height: 1;
+			letter-spacing: -0.4px;
+			white-space: nowrap;
+		}
+
+		.wx-b > b i {
+			font-style: normal;
+			font-size: 12px;
+			font-weight: 400;
+			padding: 0 2px;
+			letter-spacing: 0;
+		}
+
+		.wx-b > b.aqi-bad {
+			font-family: var(--sans);
+			font-size: 15px;
+			color: var(--paper);
+			background: var(--red);
+			padding: 2px 4px 1px;
+			display: inline-block;
+			align-self: flex-start;
+		}
+
+		.wx-s {
+			display: flex;
+			align-items: baseline;
+			justify-content: flex-start;
+			gap: 6px;
+			border-left: 1px solid var(--ink);
+			padding-left: 9px;
+			min-width: 0;
+		}
+
+		.wx-s:nth-child(4n + 1) {
+			border-left: none;
+			padding-left: 0;
+		}
+
+		.wx-s span {
+			font-size: 10px;
+			white-space: nowrap;
+		}
+
+		.wx-s b {
+			font-size: 12px;
+			font-weight: 700;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
+		.wx-days {
+			grid-column: 1 / -1;
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			column-gap: 10px;
+			border-top: 1px solid var(--ink);
+			margin-top: 3px;
+			padding-top: 5px;
+		}
+
+		.wd {
+			display: flex;
+			align-items: center;
+			gap: 5px;
+			border-left: 1px solid var(--ink);
+			padding-left: 9px;
+		}
+
+		.wd:first-child {
+			border-left: none;
+			padding-left: 0;
+		}
+
+		.wd .lb {
+			font-size: 10px;
+		}
+
+		.wd .ic {
+			display: flex;
+		}
+
+		.wd .tx {
+			font-size: 12px;
+			font-weight: 700;
+		}
+
+		.wd .tp {
+			font-family: var(--num);
+			font-size: 13px;
+			font-weight: 700;
+			letter-spacing: 0.2px;
+		}
+
+		/* ---------- 主体：三品种行情 + 突发 ---------- */
+		.main {
+			flex: 1;
+			min-height: 0;
+			display: flex;
+			flex-direction: column;
+			padding-top: 10px;
+		}
+
+		.markets {
+			flex: 1;
+			min-height: 0;
+			display: grid;
+			grid-template-columns: repeat(3, 1fr);
+			column-gap: 16px;
+		}
+
+		.mkt {
+			min-width: 0;
+			display: flex;
+			flex-direction: column;
+			gap: 5px;
+			overflow: hidden;
+		}
+
+		.mkt-head {
+			display: flex;
+			align-items: baseline;
+			gap: 8px;
+			height: 28px;
+			flex: 0 0 28px;
+			border-bottom: 2px solid var(--ink);
+			padding-bottom: 4px;
+		}
+
+		.mkt-name {
+			font-size: 12px;
+			font-weight: 700;
+			white-space: nowrap;
+		}
+
+		.mkt-price {
+			font-family: var(--num);
+			font-size: 21px;
+			font-weight: 700;
+			line-height: 1;
+			letter-spacing: -0.4px;
+			white-space: nowrap;
+		}
+
+		.mkt-chg {
+			margin-left: auto;
+			font-family: var(--num);
+			font-size: 11px;
+			font-weight: 700;
+			white-space: nowrap;
+		}
+
+		.mkt-chg.up {
+			color: var(--red);
+		}
+
+		.mkt-chart {
+			position: relative;
+			flex: 1 1 0;
+			min-height: 40px;
+			overflow: hidden;
+		}
+
+		.yax {
+			position: absolute;
+			right: 0;
+			top: 4px;
+			bottom: 4px;
+			width: 36px;
+			display: flex;
+			flex-direction: column;
+			justify-content: space-between;
+			align-items: flex-end;
+			font-size: 10px;
+			line-height: 1;
+			white-space: nowrap;
+			pointer-events: none;
+		}
+
+		.mkt-chart svg {
+			display: block;
+		}
+
+		.mkt-axis {
+			display: flex;
+			justify-content: space-between;
+			flex: 0 0 auto;
+			font-size: 10px;
+			line-height: 1;
+			white-space: nowrap;
+		}
+
+		.brk {
+			display: none;
+			flex: 0 0 auto;
+			margin-top: 6px;
+			padding-top: 4px;
+			border-top: 2px solid var(--ink);
+		}
+
+		.brk.on {
+			display: block;
+		}
+
+		.brk-row {
+			display: flex;
+			align-items: baseline;
+			gap: 8px;
+			height: 17px;
+		}
+
+		.brk-tag {
+			flex: 0 0 28px;
+			font-size: 10px;
+			font-weight: 700;
+			line-height: 1;
+			text-align: center;
+			color: var(--paper);
+			background: var(--red);
+			padding: 3px 0 2px;
+		}
+
+		.brk-tag.empty {
+			background: none;
+			padding: 0;
+		}
+
+		.brk-title {
+			flex: 1;
+			min-width: 0;
+			font-size: 13px;
+			font-weight: 700;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
+		.brk-time {
+			flex: 0 0 auto;
+			font-family: var(--num);
+			font-size: 10px;
+		}
+
+		/* ---------- 页脚 ---------- */
+		.ftr {
+			height: 32px;
+			flex: 0 0 32px;
+			display: grid;
+			grid-template-columns: repeat(4, 1fr);
+			column-gap: 10px;
+			align-items: center;
+			margin-top: 8px;
+			padding-top: 7px;
+			border-top: 3px solid var(--ink);
+			font-size: 11px;
+		}
+
+		.ftr>div {
+			display: flex;
+			align-items: baseline;
+			gap: 6px;
+			min-width: 0;
+			padding-left: 12px;
+			border-left: 1px solid var(--ink);
+			white-space: nowrap;
+		}
+
+		.ftr>div:first-child {
+			padding-left: 0;
+			border-left: none;
+		}
+
+		.ftr .k {
+			font-size: 11px;
+		}
+
+		.ftr .v {
+			font-size: 14px;
+			font-weight: 700;
+		}
+
+		.ftr .v.num {
+			font-family: var(--num);
+		}
+
+		.ftr .v.model {
+			font-size: 12px;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
+		/* ---------- 右侧工具条（不参与截图） ---------- */
+		.tools {
+			width: 56px;
+			height: 480px;
+			flex: 0 0 56px;
+			border-left: 1px solid var(--ink);
+			padding: 8px 6px;
+			display: flex;
+			flex-direction: column;
+			gap: 6px;
+		}
+
+		.tools button {
+			font-family: var(--sans);
+			font-size: 11px;
+			line-height: 1.25;
+			background: var(--paper);
+			color: var(--ink);
+			border: 1px solid var(--ink);
+			border-radius: 0;
+			padding: 6px 2px;
+			cursor: pointer;
+			-webkit-appearance: none;
+			appearance: none;
+		}
+
+		.tools .tip {
+			font-size: 9px;
+			line-height: 1.5;
+			margin-top: auto;
+		}
+
+		body.clean .tools {
+			display: none;
+		}
+
+		body.audit * {
+			outline: 1px dashed var(--red);
+		}
+	</style>
+</head>
+
+<body>
+	<div class="page" id="page">
+		<header class="hdr">
+			<div class="hdr-left">
+				<div class="date">
+					<b id="d-date">11月01日</b>
+					<span class="week" id="d-week">周六</span>
+					<span class="slot"><b id="d-slot">12:15</b></span>
+				</div>
+				<div class="lunar" id="d-lunar">农历九月十二 · 距立冬 6 天</div>
+				<div class="cal">
+					<span>今年剩 <b id="c-left">60</b> 天</span>
+					<i>·</i>
+					<span><b id="c-hol">元旦</b> <b id="c-hol-days">61</b> 天后</span>
+				</div>
+				<div class="warn" id="d-warn">大风蓝色预警</div>
+			</div>
+			<div class="hdr-wx">
+				<div class="wx-b"><span id="a-aqi-label">空气质量</span><b id="a-aqi">良 42</b></div>
+				<div class="wx-b"><span>今日</span><b id="a-hl">24°<i>/</i>17°</b></div>
+				<div class="wx-b"><span>体感</span><b id="a-feels">22°</b></div>
+				<div class="wx-b"><span>机身</span><b id="a-dev">XX°</b></div>
+				<div class="wx-s"><span>湿度</span><b id="a-hum">68%</b></div>
+				<div class="wx-s"><span>风</span><b id="a-wind">东南 3级</b></div>
+				<div class="wx-s"><span>紫外线</span><b id="a-uv">弱</b></div>
+				<div class="wx-s"><span>气压</span><b id="a-pres">1016 hPa</b></div>
+				<div class="wx-days" id="a-days"></div>
+			</div>
+		</header>
+
+		<main class="main">
+			<div class="markets" id="markets"></div>
+			<div class="brk" id="brk"></div>
+		</main>
+
+		<footer class="ftr">
+			<div><span class="k">今日消耗</span><span class="v num" id="t-today">2.32M</span></div>
+			<div><span class="k">近 7 天</span><span class="v num" id="t-week">18.4M</span></div>
+			<div><span class="k">日均</span><span class="v num" id="t-avg">2.63M</span></div>
+			<div><span class="k">常用模型</span><span class="v model" id="t-model">deepseek-v4-flash</span></div>
+		</footer>
+	</div>
+
+	<aside class="tools" id="tools">
+		<button type="button" onclick="auditPalette()">检查<br>色板</button>
+		<button type="button" onclick="location.search='?clean=1'">纯净<br>模式</button>
+		<button type="button" onclick="location.reload()">重绘</button>
+		<div class="tip">截图时<br>用纯净<br>模式<br><br>800<br>x<br>480</div>
+	</aside>
+
+	<script>
+		/* ==========================================================
+		   数据契约
+		   发送程序只需要生成同样结构的对象，然后调用
+		   window.renderDashboard(data)，或者用 ?data=xxx.json 注入。
+		   数字型 token 的原始单位是个，渲染时自动换算。
+		   ========================================================== */
+		/* 示例数据生成：真实数据由采集程序提供，这里只用来预览版式 */
+		function demoRand(seed) {
+			let s = seed;
+			return () => {
+				s = (s * 9301 + 49297) % 233280;
+				return s / 233280;
+			};
+		}
+
+		function demoDaily(seed, start, vol, n) {
+			const rnd = demoRand(seed);
+			const out = [];
+			const dates = [];
+			const d = new Date();
+			while (dates.length < n) {
+				const w = d.getDay();
+				if (w !== 0 && w !== 6) dates.unshift(new Date(d));
+				d.setDate(d.getDate() - 1);
+			}
+			let p = start;
+			dates.forEach((dt) => {
+				const o = p;
+				const c = o * (1 + (rnd() - 0.48) * vol);
+				const h = Math.max(o, c) * (1 + rnd() * vol * 0.6);
+				const l = Math.min(o, c) * (1 - rnd() * vol * 0.6);
+				const md = String(dt.getMonth() + 1).padStart(2, "0") + "-" + String(dt.getDate()).padStart(2, "0");
+				out.push([ md, +o.toFixed(2), +c.toFixed(2), +h.toFixed(2), +l.toFixed(2) ]);
+				p = c;
+			});
+			return out;
+		}
+
+		function demoMinute(seed, base, vol) {
+			const rnd = demoRand(seed);
+			const out = [];
+			let p = base;
+			for (let i = 0; i < 240; i++) {
+				p = p * (1 + (rnd() - 0.5) * vol);
+				out.push(+p.toFixed(3));
+			}
+			return out;
+		}
+
+		function demoMarket(name, bars, seed) {
+			const last = bars[bars.length - 1];
+			const prev = bars[bars.length - 2];
+			return {
+				name: name,
+				price: last[2].toFixed(2),
+				change: +(((last[2] / prev[2]) - 1) * 100).toFixed(2),
+				prevClose: prev[2],
+				daily: bars,
+				minute: demoMinute(seed, prev[2], 0.0007)
+			};
+		}
+
+		const DEMO_HS300 = demoDaily(7, 4520, 0.011, 30);
+		const DEMO_C500 = demoDaily(19, 6180, 0.014, 30);
+		const DEMO_AU = demoDaily(31, 8.02, 0.007, 30);
+
+		window.DASHBOARD_DATA = {
+			date: "11月01日",
+			week: "周六",
+			lunar: "农历九月十二 · 距立冬 6 天",
+			slot: "12:15",
+			city: "辽宁本溪溪湖区",
+			warning: "",
+			calendar: {
+				daysLeft: 60,
+				holiday: { name: "元旦", days: 61 }
+			},
+			weather: {
+				temp: 21,
+				feels: 22,
+				text: "多云转晴",
+				icon: "cloud",
+				high: 24,
+				low: 17,
+				device: null,
+				humidity: 68,
+				wind: "东南 3级",
+				uv: "弱",
+				pressure: 1016,
+				aqi: { text: "良", value: 42, bad: false },
+				hours: [
+					{ h: "08", t: 18 }, { h: "10", t: 20 }, { h: "12", t: 23 },
+					{ h: "14", t: 25 }, { h: "16", t: 24 }, { h: "18", t: 21 },
+					{ h: "20", t: 19 }
+				],
+				days: [
+					{ label: "明天", text: "多云", icon: "cloud", high: 25, low: 18 },
+					{ label: "后天", text: "小雨", icon: "rain", high: 22, low: 16 },
+					{ label: "周二", text: "晴", icon: "sun", high: 26, low: 17 }
+				]
+			},
+			markets: [
+				demoMarket("沪深300", DEMO_HS300, 21),
+				demoMarket("中证500", DEMO_C500, 22),
+				demoMarket("黄金ETF", DEMO_AU, 23)
+			],
+			breaking: [
+				{ title: "中东局势升级，霍尔木兹海峡通行受阻", time: "10:32" },
+				{ title: "央行宣布下调存款准备金率 0.5 个百分点", time: "09:15" }
+			],
+			tokens: {
+				today: 2320000,
+				week: 18400000,
+				avg: 2630000,
+				model: "deepseek-v4-flash"
+			}
+		};
+
+		const $ = (id) => document.getElementById(id);
+
+		function setText(id, v) {
+			$(id).textContent = v == null ? "" : String(v);
+		}
+
+		/* 刷新时刻：向下取整到 15 分钟一档 */
+		function slot15() {
+			const t = new Date();
+			const m = Math.floor(t.getMinutes() / 15) * 15;
+			return String(t.getHours()).padStart(2, "0") + ":" + String(m).padStart(2, "0");
+		}
+
+		/* 数量换算：12345678 -> 12.3M */
+		function fmtTokens(n) {
+			if (n >= 1e8) return [ (n / 1e8).toFixed(2), "亿" ];
+			if (n >= 1e6) return [ (n / 1e6).toFixed(2), "M" ];
+			if (n >= 1e3) return [ (n / 1e3).toFixed(1), "K" ];
+			return [ String(n), "" ];
+		}
+
+		/* ---------- 天气图标：纯线条 + 一处红 ---------- */
+		function iconSVG(kind, size) {
+			size = size || 46;
+			const s = 'stroke="#000" stroke-width="2.2" stroke-linecap="square" fill="none"';
+			let body = "";
+			switch (kind) {
+				case "sun":
+					body = `<circle cx="22" cy="22" r="7" fill="#d0021b"/>` +
+						`<path d="M22 4v5M22 35v5M4 22h5M35 22h5M9.4 9.4l3.5 3.5M31.1 31.1l3.5 3.5M34.6 9.4l-3.5 3.5M12.9 31.1l-3.5 3.5" ${s}/>`;
+					break;
+				case "rain":
+					body = `<path d="M13 29h19a6 6 0 0 0 .5-12 9.5 9.5 0 0 0-18-2.5A7.6 7.6 0 0 0 13 29z" ${s}/>` +
+						`<path d="M16 33l-2 6M23 33l-2 6M30 33l-2 6" ${s}/>`;
+					break;
+				case "overcast":
+					body = `<path d="M9 24h13a5.5 5.5 0 0 0 .4-11 8.5 8.5 0 0 0-16-2.2A7 7 0 0 0 9 24z" ${s}/>` +
+						`<path d="M18 34h16a5.5 5.5 0 0 0 .4-11 8.5 8.5 0 0 0-16-2.2A7 7 0 0 0 18 34z" fill="#fff" ${s}/>`;
+					break;
+				case "snow":
+					body = `<path d="M13 28h19a6 6 0 0 0 .5-12 9.5 9.5 0 0 0-18-2.5A7.6 7.6 0 0 0 13 28z" ${s}/>` +
+						`<path d="M16 33v6M13 36h6M29 33v6M26 36h6" stroke="#000" stroke-width="1.6"/>`;
+					break;
+				case "thunder":
+					body = `<path d="M13 27h19a6 6 0 0 0 .5-12 9.5 9.5 0 0 0-18-2.5A7.6 7.6 0 0 0 13 27z" ${s}/>` +
+						`<path d="M23 30l-5 8h5l-3 7" stroke="#d0021b" stroke-width="2.4" fill="none"/>`;
+					break;
+				case "fog":
+					body = `<path d="M13 22h19a6 6 0 0 0 .5-12 9.5 9.5 0 0 0-18-2.5A7.6 7.6 0 0 0 13 22z" ${s}/>` +
+						`<path d="M9 30h26M13 36h18" ${s}/>`;
+					break;
+				default:
+					body = `<path d="M12 31h20a6.5 6.5 0 0 0 .5-13 10 10 0 0 0-19-2.5A8 8 0 0 0 12 31z" ${s}/>`;
+			}
+			return `<svg width="${size}" height="${size}" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg" fill="none">${body}</svg>`;
+		}
+
+		/* ---------- 日 K：30 根蜡烛 ---------- */
+		function candleSVG(bars, W, H) {
+			if (!W || !H || !bars.length) return "";
+			const px = 5, py = 6;
+			const pw = W - px * 2, ph = H - py * 2;
+			let hi = -Infinity, lo = Infinity;
+			bars.forEach((b) => {
+				hi = Math.max(hi, +b[3]);
+				lo = Math.min(lo, +b[4]);
+			});
+			if (!isFinite(hi) || !isFinite(lo)) return "";
+			if (hi === lo) { hi += 1; lo -= 1; }
+			const pad = (hi - lo) * 0.06;
+			hi += pad; lo -= pad;
+			const y = (v) => py + (hi - v) / (hi - lo) * ph;
+			const slot = pw / bars.length;
+			const bw = Math.max(2, Math.min(7, Math.floor(slot * 0.62)));
+			let s = "";
+			bars.forEach((b, i) => {
+				const o = +b[1], c = +b[2], h = +b[3], l = +b[4];
+				const cx = Math.round(px + slot * (i + 0.5));
+				const up = c >= o;
+				const col = up ? "#d0021b" : "#000";
+				s += `<line x1="${cx}" y1="${Math.round(y(h))}" x2="${cx}" y2="${Math.round(y(l))}" stroke="${col}" stroke-width="1"/>`;
+				const top = Math.round(y(Math.max(o, c)));
+				const bh = Math.max(1, Math.round(y(Math.min(o, c))) - top);
+				s += `<rect x="${cx - Math.floor(bw / 2)}" y="${top}" width="${bw}" height="${bh}" fill="${col}"/>`;
+			});
+			return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${s}</svg>`;
+		}
+
+		/* ---------- 分时线：按涨跌幅画，0 点虚线 ---------- */
+		function minuteParts(points, prevClose) {
+			const vals = points.map(Number);
+			const base = Number(prevClose) || vals[0] || 1;
+			const pct = vals.map((v) => (v / base - 1) * 100);
+			let amp = 0;
+			pct.forEach((p) => { amp = Math.max(amp, Math.abs(p)); });
+			amp = Math.max(amp, 0.15);
+			return { pct: pct, top: amp * 1.12 };
+		}
+
+		function minuteSVG(pct, top, W, H, slots) {
+			if (!W || !H || pct.length < 2) return "";
+			const px = 5, py = 6, pr = 36;
+			const pw = W - px - pr, ph = H - py * 2;
+			const n = Math.max(slots || 240, pct.length);
+			const x = (i) => px + i / (n - 1) * pw;
+			const y = (v) => py + (top - v) / (top * 2) * ph;
+
+			const zero = Math.round(y(0));
+			let s = `<line x1="${px}" y1="${zero}" x2="${px + pw}" y2="${zero}" stroke="#000" stroke-width="1" stroke-dasharray="3 3"/>`;
+
+			const pts = pct.map((p, i) => x(i).toFixed(1) + "," + y(p).toFixed(1)).join(" ");
+			s += `<polyline points="${pts}" fill="none" stroke="#000" stroke-width="2" stroke-linejoin="miter"/>`;
+
+			const li = pct.length - 1;
+			s += `<circle cx="${x(li).toFixed(1)}" cy="${y(pct[li]).toFixed(1)}" r="3" fill="#d0021b"/>`;
+			return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${s}</svg>`;
+		}
+
+		/* ---------- B 区渲染 ---------- */
+		function renderBreaking(list) {
+			const el = $("brk");
+			const items = (list || []).slice(0, 3);
+			if (!items.length) {
+				el.classList.remove("on");
+				el.innerHTML = "";
+				return;
+			}
+			el.classList.add("on");
+			el.innerHTML = items.map((x, i) =>
+				`<div class="brk-row">` +
+				`<span class="brk-tag${i === 0 ? "" : " empty"}">${i === 0 ? "突发" : ""}</span>` +
+				`<span class="brk-title">${escapeHTML(x.title || "")}</span>` +
+				`<span class="brk-time">${escapeHTML(x.time || "")}</span>` +
+				`</div>`
+			).join("");
+		}
+
+		function renderMarkets(list) {
+			const host = $("markets");
+			const data = (list || []).slice(0, 3);
+			host.innerHTML = data.map((m) => {
+				const up = Number(m.change) >= 0;
+				const chg = (up ? "+" : "") + Number(m.change || 0).toFixed(2);
+				return `<div class="mkt">` +
+					`<div class="mkt-head">` +
+					`<span class="mkt-name">${escapeHTML(m.name || "")}</span>` +
+					`<span class="mkt-price">${escapeHTML(String(m.price == null ? "-" : m.price))}</span>` +
+					`<span class="mkt-chg ${up ? "up" : ""}">${up ? "▲" : "▼"}${chg}%</span>` +
+					`</div>` +
+					`<div class="mkt-chart" data-k="d"></div>` +
+					`<div class="mkt-axis" data-a="d"></div>` +
+					`<div class="mkt-chart" data-k="m"></div>` +
+					`<div class="mkt-axis" data-a="m"></div>` +
+					`</div>`;
+			}).join("");
+
+			const cols = host.querySelectorAll(".mkt");
+			data.forEach((m, i) => {
+				const col = cols[i];
+				const de = col.querySelector('[data-k="d"]');
+				const me = col.querySelector('[data-k="m"]');
+				const dw = Math.floor(de.clientWidth), dh = Math.floor(de.clientHeight);
+				de.innerHTML = candleSVG(m.daily || [], dw, dh);
+				const mw = Math.floor(me.clientWidth), mh = Math.floor(me.clientHeight);
+				const sc = minuteParts(m.minute || [], m.prevClose);
+				const fmtPct = (v) => (Math.abs(v) >= 1 ? v.toFixed(1) : v.toFixed(2));
+				me.innerHTML = minuteSVG(sc.pct, sc.top, mw, mh, 240) +
+					`<div class="yax">` +
+					`<span>+${fmtPct(sc.top)}%</span>` +
+					`<span>0</span>` +
+					`<span>-${fmtPct(sc.top)}%</span>` +
+					`</div>`;
+
+				const bars = m.daily || [];
+				const da = col.querySelector('[data-a="d"]');
+				if (bars.length) {
+					const hi = Math.max.apply(null, bars.map((b) => +b[3]));
+					const lo = Math.min.apply(null, bars.map((b) => +b[4]));
+					da.innerHTML =
+						`<span>${escapeHTML(String(bars[0][0]).slice(-5))}</span>` +
+						`<span>高 ${hi.toFixed(2)}　低 ${lo.toFixed(2)}</span>` +
+						`<span>${escapeHTML(String(bars[bars.length - 1][0]).slice(-5))}</span>`;
+				} else {
+					da.innerHTML = "";
+				}
+				const mins = (m.minute || []).map(Number);
+				const base = Number(m.prevClose) || mins[0] || 0;
+				let ampTxt = "";
+				if (mins.length > 1 && base) {
+					let mx = -Infinity, mn = Infinity;
+					mins.forEach((v) => {
+						const p = (v / base - 1) * 100;
+						mx = Math.max(mx, p);
+						mn = Math.min(mn, p);
+					});
+					ampTxt = "振幅 " + (mx - mn).toFixed(2) + "%";
+				}
+				col.querySelector('[data-a="m"]').innerHTML =
+					`<span>09:30</span><span>${ampTxt}</span><span>15:00</span>`;
+			});
+		}
+
+		/* ---------- 主渲染 ---------- */
+		function renderDashboard(d) {
+			// 页眉
+			setText("d-date", d.date);
+			setText("d-week", d.week);
+			setText("d-lunar", d.lunar);
+			setText("d-slot", d.slot || slot15());
+
+			$("d-week").classList.toggle("end", /[六日]$/.test(String(d.week || "")));
+
+			const cal = d.calendar || {};
+			setText("c-left", cal.daysLeft == null ? "-" : cal.daysLeft);
+			const hol = cal.holiday || {};
+			setText("c-hol", hol.name || "-");
+			setText("c-hol-days", hol.days == null ? "-" : hol.days);
+
+			const warn = $("d-warn");
+			if (d.warning) {
+				warn.textContent = d.warning;
+				warn.classList.add("on");
+			} else {
+				warn.classList.remove("on");
+			}
+
+			// 页眉天气
+			const w = d.weather;
+			const aqi = w.aqi || {};
+			$("a-aqi-label").innerHTML = (d.city ? `<b>${escapeHTML(d.city)}</b>` : "") + `<i class="aqi-suf">AQI</i>`;
+			const aqiEl = $("a-aqi");
+			aqiEl.textContent = (aqi.text || "") + " " + (aqi.value == null ? "" : aqi.value);
+			aqiEl.classList.toggle("aqi-bad", !!aqi.bad);
+
+			$("a-hl").innerHTML = w.high + "°<i>/</i>" + w.low + "°";
+			setText("a-feels", w.feels + "°");
+			setText("a-dev", w.device == null || w.device === "" ? "XX°" : w.device + "°");
+			setText("a-hum", w.humidity + "%");
+			setText("a-wind", w.wind);
+			setText("a-uv", w.uv);
+			setText("a-pres", w.pressure == null || w.pressure === "" ? "--" : w.pressure + " hPa");
+
+			$("a-days").innerHTML = (w.days || []).slice(0, 2).map((x) =>
+				`<div class="wd">` +
+				`<span class="lb">${x.label}</span>` +
+				`<span class="ic">${iconSVG(x.icon, 15)}</span>` +
+				`<span class="tx">${x.text}</span>` +
+				`<span class="tp">${x.high}°/${x.low}°</span>` +
+				`</div>`
+			).join("");
+
+			// B 区：突发 + 三品种行情
+			renderBreaking(d.breaking);
+			renderMarkets(d.markets);
+
+			// C 区：Token 统计
+			const k = d.tokens || {};
+			const fmtV = (n) => {
+				if (n == null || n === "") return "-";
+				const x = fmtTokens(Number(n));
+				return x[0] + x[1];
+			};
+			setText("t-today", fmtV(k.today));
+			setText("t-week", fmtV(k.week));
+			setText("t-avg", fmtV(k.avg));
+			setText("t-model", k.model || "-");
+
+			document.documentElement.dataset.ready = "1";
+		}
+
+		/* 新闻标题来自外部数据，这里只做最小转义 */
+		function escapeHTML(s) {
+			return String(s).replace(/[&<>"']/g, (c) => ({
+				"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+			}[c]));
+		}
+
+		/* ---------- 色板审计：找出会被抖动算法压扁的颜色 ---------- */
+		function auditPalette() {
+			const parse = (c) => {
+				const m = c.match(/rgba?\(([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)(?:[,\s/]+([\d.]+))?\)/);
+				if (!m) return null;
+				return { r: +m[1], g: +m[2], b: +m[3], a: m[4] === undefined ? 1 : +m[4] };
+			};
+			const ok = (c) => {
+				const p = parse(c);
+				if (!p) return true;
+				if (p.a === 0) return true;
+				if (p.r === p.g && p.g === p.b) return p.r === 0 || p.r === 255;
+				return p.r >= 160 && p.g < 80 && p.b < 80;
+			};
+			const bad = [];
+			document.querySelectorAll("#page *").forEach((el) => {
+				const s = getComputedStyle(el);
+				[ [ "color", s.color ], [ "background", s.backgroundColor ], [ "border", s.borderTopColor ] ].forEach((kv) => {
+					if (!ok(kv[1])) bad.push(el.tagName + "." + (el.className || "") + " " + kv[0] + "=" + kv[1]);
+				});
+			});
+			const uniq = Array.from(new Set(bad));
+			console.log("色板审计：发现 " + uniq.length + " 处非三色值");
+			uniq.slice(0, 40).forEach((x) => console.log(x));
+			alert(uniq.length ? "发现 " + uniq.length + " 处非三色值，详见控制台" : "全部落在三色色板内");
+		}
+
+		/* ---------- 启动：支持 ?data=url 注入 ---------- */
+		function deepMerge(base, patch) {
+			const out = Object.assign({}, base);
+			Object.keys(patch || {}).forEach((k) => {
+				const v = patch[k];
+				if (v && typeof v === "object" && !Array.isArray(v) && base[k] && typeof base[k] === "object") {
+					out[k] = deepMerge(base[k], v);
+				} else {
+					out[k] = v;
+				}
+			});
+			return out;
+		}
+
+		async function boot() {
+			const q = new URLSearchParams(location.search);
+			if (q.get("clean")) document.body.classList.add("clean");
+			let data = window.DASHBOARD_DATA;
+			const src = q.get("data");
+			if (src) {
+				try {
+					const r = await fetch(src, { cache: "no-store" });
+					data = deepMerge(data, await r.json());
+				} catch (e) {
+					console.warn("数据加载失败，使用内置示例：", e);
+				}
+			}
+			renderDashboard(data);
+			window.__DASHBOARD_READY__ = true;
+		}
+
+		window.renderDashboard = renderDashboard;
+		boot();
+	</script>
+</body>
+
+</html>
