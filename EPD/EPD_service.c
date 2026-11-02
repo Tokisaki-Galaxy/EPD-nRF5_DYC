@@ -196,11 +196,15 @@ static void epd_service_on_write(ble_epd_t* p_epd, uint8_t* p_data, uint16_t len
             nrf_delay_ms(200);
             EPD_Write(UC81xx_ROTP, 0x00);
             nrf_delay_ms(50);
-            static uint8_t otp[128];
+            static uint8_t otp[64];
             for (uint16_t off = 0; off < 0x1000; off += sizeof(otp)) {
                 EPD_ReadData(otp, sizeof(otp));
-                ble_epd_string_send(p_epd, otp, sizeof(otp));
-                nrf_delay_ms(10);
+                uint32_t err;
+                do {
+                    err = ble_epd_string_send(p_epd, otp, sizeof(otp));
+                    if (err == NRF_ERROR_RESOURCES) nrf_delay_ms(20);
+                } while (err == NRF_ERROR_RESOURCES);
+                nrf_delay_ms(20);
             }
             EPD_WriteCmd(UC81xx_POF);
             nrf_delay_ms(100);
@@ -469,3 +473,4 @@ void ble_epd_on_timer(ble_epd_t* p_epd, uint32_t timestamp, bool force_update) {
         app_sched_event_put(&event, sizeof(epd_gui_update_event_t), epd_gui_update);
     }
 }
+
