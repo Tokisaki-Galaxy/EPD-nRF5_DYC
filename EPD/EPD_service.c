@@ -190,24 +190,40 @@ static void epd_service_on_write(ble_epd_t* p_epd, uint8_t* p_data, uint16_t len
             break;
 
         case EPD_CMD_DUMP_OTP: {
+            // One chunk per command. Sending the whole 4 KB from inside the BLE
+            // event handler exhausts the notification buffers and the handler
+            // never returns, which locks the control point until reset.
             if (!p_epd->epd) return;
-            EPD_Reset(true, 10);
-            EPD_WriteCmd(UC81xx_PON);
-            nrf_delay_ms(200);
-            EPD_Write(UC81xx_ROTP, 0x00);
-            nrf_delay_ms(50);
-            static uint8_t otp[64];
-            for (uint16_t off = 0; off < 0x1000; off += sizeof(otp)) {
-                EPD_ReadData(otp, sizeof(otp));
-                uint32_t err;
-                do {
-                    err = ble_epd_string_send(p_epd, otp, sizeof(otp));
-                    if (err == NRF_ERROR_RESOURCES) nrf_delay_ms(20);
-                } while (err == NRF_ERROR_RESOURCES);
-                nrf_delay_ms(20);
+            static struct {
+                bool active;
+                uint16_t offset;
+            } otp_dump = {false, 0};
+            static uint8_t otp_chunk[128];
+
+            if (!otp_dump.active) {
+                EPD_Reset(true, 10);
+                EPD_WriteCmd(UC81xx_PON);
+                nrf_delay_ms(200);
+                EPD_Write(UC81xx_ROTP, 0x00);
+                nrf_delay_ms(50);
+                otp_dump.active = true;
+                otp_dump.offset = 0;
             }
-            EPD_WriteCmd(UC81xx_POF);
-            nrf_delay_ms(100);
+
+            EPD_ReadData(otp_chunk, sizeof(otp_chunk));
+            uint32_t err = ble_epd_string_send(p_epd, otp_chunk, sizeof(otp_chunk));
+            for (uint8_t retry = 0; retry < 20 && err == NRF_ERROR_RESOURCES; retry++) {
+                nrf_delay_ms(10);
+                err = ble_epd_string_send(p_epd, otp_chunk, sizeof(otp_chunk));
+            }
+            otp_dump.offset += sizeof(otp_chunk);
+
+            if (otp_dump.offset >= 0x1000) {
+                EPD_WriteCmd(UC81xx_POF);
+                nrf_delay_ms(100);
+                otp_dump.active = false;
+                otp_dump.offset = 0;
+            }
             break;
         }
 
