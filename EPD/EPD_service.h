@@ -78,6 +78,10 @@ enum EPD_CMDS {
     EPD_CMD_SYS_RESET = 0x91,  /**< MCU reset */
     EPD_CMD_SYS_SLEEP = 0x92,  /**< MCU enter sleep mode */
     EPD_CMD_CFG_ERASE = 0x99,  /**< Erase config and reset */
+
+    EPD_CMD_DUMP_OTP = 0x35,    /**< dump panel OTP through notifications */
+    EPD_CMD_REFRESH_RAW = 0x36, /**< DRF on the current window, no reset */
+    EPD_CMD_PROBE = 0x37,       /**< report temperature and VDD */
 };
 
 /**@brief EPD Service structure.
