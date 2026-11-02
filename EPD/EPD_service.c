@@ -242,6 +242,18 @@ static void epd_service_on_write(ble_epd_t* p_epd, uint8_t* p_data, uint16_t len
             break;
         }
 
+        case EPD_CMD_READ_DATA: {
+            // Read back a register from the panel. Used for the panel glass
+            // check (0x44) and other readable status registers.
+            if (length < 2) return;
+            uint8_t count = p_data[1];
+            if (count > 32) count = 32;
+            static uint8_t read_buf[32];
+            EPD_ReadData(read_buf, count);
+            ble_epd_string_send(p_epd, read_buf, count);
+            break;
+        }
+
         case EPD_CMD_SET_TIME: {
             if (length < 5) return;
 
