@@ -47,7 +47,7 @@
  "markets": [
   {
    "name": "沪深300",
-   "price": "999.00",
+   "price": "3985.50",
    "change": -1.39,
    "prevClose": 4041.84,
    "daily": [
@@ -539,7 +539,7 @@
   },
   {
    "name": "中证500",
-   "price": "999.00",
+   "price": "6266.19",
    "change": -2.91,
    "prevClose": 6453.72,
    "daily": [
@@ -1031,7 +1031,7 @@
   },
   {
    "name": "黄金ETF",
-   "price": "999.00",
+   "price": "8.115",
    "change": -1.33,
    "prevClose": 8.224,
    "daily": [
@@ -1524,9 +1524,9 @@
  ],
  "breaking": [],
  "tokens": {
-  "today": 551989356,
-  "week": 3699104800,
-  "avg": 528443542,
-  "model": "deepseek-flash"
+  "today": 577242069,
+  "week": 3724357513,
+  "avg": 532051073,
+  "model": "group/deepseek-flash"
  }
 }

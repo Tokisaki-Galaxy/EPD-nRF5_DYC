@@ -370,9 +370,6 @@ def collect_tokens():
     finally:
         con.close()
 
-    if model and "/" in model:
-        model = model.split("/")[-1]
-
     return {
         "today": int(today),
         "week": int(week),
