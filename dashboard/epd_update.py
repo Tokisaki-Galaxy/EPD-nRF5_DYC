@@ -503,6 +503,8 @@ def main():
     result["city"] = CITY
     result["date"] = f"{now.month}月{now.day:02d}日"
     result["week"] = "周" + "一二三四五六日"[now.weekday()]
+    # 无头浏览器的虚拟时钟是冻结的, 页面取不到真实时间, 刷新时刻由这里写入
+    result["slot"] = now.strftime("%H:%M")
 
     cal = collect_calendar(now)
     result["calendar"] = {
