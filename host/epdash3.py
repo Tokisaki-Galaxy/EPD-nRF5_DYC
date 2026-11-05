@@ -3,8 +3,9 @@
 三色看板更新器.
 
 - 从 PNG 提取黑白层和红色层
-- 两层一起差分, 取并集包围盒
-- 默认用面板自带 OTP 波形, 整屏 17.9 秒, 窗口刷新只闪窗口, 红色准确
+- 红色没变时走黑白窗口局刷, 2.6 秒, 红色像素不被驱动所以保持
+- 红色变了才走三色刷新, 整屏或窗口, 17.9 秒
+- 三色刷完把黑白画面写回 DTM2 垫底, 再切黑白模式, 保证新旧图一致
 - --fast 用自写寄存器波形, 2.6 秒, 但红色驱动力不足
 
 用法:
@@ -186,6 +187,25 @@ class Panel:
         await self.panel(0x24, BB)
         await self.panel(0x25, [0] * 42)
 
+    async def mode_kw(self):
+        """黑白模式: 新旧双缓冲, WW/KK 写零, 未变化像素不驱动."""
+        await self.panel(0x00, [0x3F])
+        await self.panel(0x50, [0xA9, 0x07])
+        await self.panel(0x20, VCOM)
+        await self.panel(0x21, [0] * 42)
+        await self.panel(0x22, WW)
+        await self.panel(0x23, BB)
+        await self.panel(0x24, [0] * 60)
+        await self.panel(0x25, [0] * 42)
+
+    async def mode_kwr(self, fast=False):
+        await self.panel(0x50, [0x77])
+        if fast:
+            await self.panel(0x00, [0x2F])
+            await self.lut()
+        else:
+            await self.panel(0x00, [0x0F])
+
     async def refresh(self):
         self.notes.clear()
         await self.svc(0x39)
@@ -197,7 +217,7 @@ class Panel:
         return -1
 
 
-async def push(old, new, force_full, otp=False):
+async def push(old, new, force_full, fast=False):
     old_bw, old_red = old if old else (None, None)
     bw, red = new
     count = 0
@@ -220,7 +240,10 @@ async def push(old, new, force_full, otp=False):
         print("画面无变化, 跳过")
         return
 
-    print("%s 窗口 x=%d..%d y=%d..%d" % ("整屏" if do_full else "局刷", box[0], box[2], box[1], box[3]))
+    red_changed = old_red is not None and int((old_red != red).sum()) > 2
+    colour = do_full or red_changed
+    label = "整屏三色" if do_full else ("窗口三色" if red_changed else "黑白局刷")
+    print("%s 窗口 x=%d..%d y=%d..%d" % (label, box[0], box[2], box[1], box[3]))
 
     dev = await find_device()
     if dev is None:
@@ -235,48 +258,58 @@ async def push(old, new, force_full, otp=False):
             await p.svc(0x01)
             await asyncio.sleep(1.0)
         else:
-            await p.panel(0x04)
+            await p.panel(0x04)     # 上电, 不复位
             await asyncio.sleep(0.2)
-        if otp:
-            await p.panel(0x00, [0x0F])
-            await p.panel(0x50, [0x77])
-        else:
-            await p.panel(0x00, [0x2F])     # 三色 + 寄存器波形
-            await p.panel(0x50, [0x77])
-            await p.lut()
 
-        if do_full:
-            await p.window(0, 0, W - 1, H - 1)
-            tx0 = time.time()
-            await p.panel(0x10)
-            sent, raw = await p.send_rle(bw.tobytes(), True)
-            await p.panel(0x13)
-            s2, r2 = await p.send_rle(red.tobytes(), False)
+        tx0 = time.time()
+        if colour:
+            await p.mode_kwr(fast)
+            if do_full:
+                await p.window(0, 0, W - 1, H - 1)
+                await p.panel(0x10)
+                sent, raw = await p.send_rle(bw.tobytes(), True)
+                await p.panel(0x13)
+                s2, r2 = await p.send_rle(red.tobytes(), False)
+            else:
+                await p.panel(0x91)
+                await p.window(*box)
+                await p.panel(0x10)
+                sent, raw = await p.send_rle(crop(bw, *box), True)
+                await p.panel(0x13)
+                s2, r2 = await p.send_rle(crop(red, *box), False)
             sent += s2
             raw += r2
             tx = time.time() - tx0
+
+            ms = await p.refresh()
+            if not do_full:
+                try:
+                    await p.panel(0x92)
+                except Exception:
+                    pass
+
+            # 垫新图: 三色刷完 DTM2 里是红色数据, 直接切黑白会把它当成新图.
+            # 把当前黑白画面写回 DTM2, 不刷新, 红色像素物理上不受影响.
+            await p.panel(0x13)
+            if do_full:
+                await p.send_rle(bw.tobytes(), False)
+            else:
+                await p.send_rle(crop(bw, *box), False)
+            await p.mode_kw()
         else:
+            await p.mode_kw()
             await p.panel(0x91)
             await p.window(*box)
-            tx0 = time.time()
-            await p.panel(0x10)
-            sent, raw = await p.send_rle(crop(bw, *box), True)
-            await p.panel(0x13)
-            s2, r2 = await p.send_rle(crop(red, *box), False)
-            sent += s2
-            raw += r2
+            await p.panel(0x13)     # 黑白模式 DTM2 就是新图
+            sent, raw = await p.send_rle(crop(bw, *box), False)
             tx = time.time() - tx0
+            ms = await p.refresh()
+            await p.panel(0x92)
+            count += 1
 
-        ms = await p.refresh()
-        if not do_full:
-            try:
-                await p.panel(0x92)
-            except Exception:
-                # 掉线只丢掉 PTOUT, 刷新本身已完成, 状态照常保存
-                pass
         print("刷新 %d ms, 传输 %.1f 秒, 原始 %d 字节, 压缩后 %d 字节 (%.1f%%)"
               % (ms, tx, raw, sent, 100.0 * sent / raw if raw else 0))
-        np.savez(STATE, bw=bw, red=red, count=(0 if do_full else count + 1))
+        np.savez(STATE, bw=bw, red=red, count=count)
     finally:
         await client.disconnect()
 
@@ -302,7 +335,7 @@ def main():
             old = (d["bw"], d["red"])
         except Exception:
             old = None
-    asyncio.run(push(old, (bw, red), args.full, not args.fast))
+    asyncio.run(push(old, (bw, red), args.full, args.fast))
 
 
 if __name__ == "__main__":

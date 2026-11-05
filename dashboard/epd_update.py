@@ -468,6 +468,7 @@ def shoot(png_path):
         browser,
         "--headless",
         "--disable-gpu",
+        "--disable-lcd-text",
         "--hide-scrollbars",
         "--force-device-scale-factor=1",
         "--window-size=800,480",

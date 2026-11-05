@@ -797,7 +797,9 @@
 				const o = +b[1], c = +b[2], h = +b[3], l = +b[4];
 				const cx = Math.round(px + slot * (i + 0.5));
 				const up = c >= o;
-				const col = up ? "#d0021b" : "#000";
+				// 最后一根是还在变的当日蜡烛, 固定黑色, 免得红色层每次刷新都变
+				const live = i === bars.length - 1;
+				const col = (up && !live) ? "#d0021b" : "#000";
 				s += `<line x1="${cx}" y1="${Math.round(y(h))}" x2="${cx}" y2="${Math.round(y(l))}" stroke="${col}" stroke-width="1"/>`;
 				const top = Math.round(y(Math.max(o, c)));
 				const bh = Math.max(1, Math.round(y(Math.min(o, c))) - top);
@@ -833,8 +835,6 @@
 			const pts = pct.map((p, i) => x(i).toFixed(1) + "," + y(p).toFixed(1)).join(" ");
 			s += `<polyline points="${pts}" fill="none" stroke="#000" stroke-width="2" stroke-linejoin="miter"/>`;
 
-			const li = pct.length - 1;
-			s += `<circle cx="${x(li).toFixed(1)}" cy="${y(pct[li]).toFixed(1)}" r="3" fill="#d0021b"/>`;
 			return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${s}</svg>`;
 		}
 
