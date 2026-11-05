@@ -125,11 +125,19 @@ SESSION.headers.update({"User-Agent": UA})
 
 
 def get(url, decode=None, timeout=TIMEOUT):
-    r = SESSION.get(url, timeout=timeout)
-    r.raise_for_status()
-    if decode:
-        r.encoding = decode
-    return r
+    last = None
+    for attempt in range(3):
+        try:
+            r = SESSION.get(url, timeout=timeout)
+            r.raise_for_status()
+            if decode:
+                r.encoding = decode
+            return r
+        except Exception as exc:
+            last = exc
+            if attempt < 2:
+                time.sleep(1.0 + attempt)
+    raise last
 
 
 def get_json(url, timeout=TIMEOUT):
@@ -223,6 +231,18 @@ def collect_weather():
             "low": num(f.get("low")),
         })
 
+    # 按日期留一份原始预报, 抓取失败跨天时用它挑当天的数据
+    saved = []
+    for f in data["forecast"]:
+        saved.append({
+            "date": f.get("ymd") or "",
+            "text": f.get("type") or "",
+            "high": num(f.get("high")),
+            "low": num(f.get("low")),
+            "wind": f"{f.get('fx', '')} {f.get('fl', '')}".strip(),
+            "aqi": int(f.get("aqi") or 0),
+        })
+
     return {
         "temp": temp,
         "feels": feels,
@@ -241,13 +261,76 @@ def collect_weather():
             "bad": aqi_value > 100,
         },
         "days": days,
+        "forecast": saved,
+    }
+
+
+def aqi_text(value):
+    if value <= 50:
+        return "优"
+    if value <= 100:
+        return "良"
+    if value <= 150:
+        return "轻度"
+    if value <= 200:
+        return "中度"
+    if value <= 300:
+        return "重度"
+    return "严重"
+
+
+def weather_from_forecast(prev, today):
+    """抓取失败时, 用之前按日期存下的预报重建当天天气. 找不到今天则返回 None."""
+    entries = prev.get("forecast") or []
+    if not entries:
+        return None
+    by_date = {e.get("date"): e for e in entries}
+
+    def entry_for(day):
+        return by_date.get(day.strftime("%Y-%m-%d"))
+
+    e = entry_for(today)
+    if e is None:
+        return None
+
+    days = []
+    for offset, label in ((0, "今天"), (1, "明天"), (2, "后天")):
+        f = entry_for(today + timedelta(days=offset))
+        if f is None:
+            break
+        days.append({
+            "label": label,
+            "text": f.get("text") or "",
+            "icon": icon_of(f.get("text") or ""),
+            "high": f.get("high"),
+            "low": f.get("low"),
+        })
+
+    high, low = e.get("high"), e.get("low")
+    temp = int(round((high + low) / 2)) if high is not None and low is not None else (prev.get("temp") or 0)
+    aqi_value = int(e.get("aqi") or 0)
+    return {
+        "temp": temp,
+        "feels": temp,
+        "text": e.get("text") or "",
+        "icon": icon_of(e.get("text") or ""),
+        "high": high,
+        "low": low,
+        "device": prev.get("device"),
+        "humidity": prev.get("humidity"),
+        "wind": e.get("wind") or prev.get("wind"),
+        "uv": prev.get("uv"),
+        "pressure": prev.get("pressure"),
+        "aqi": {"text": aqi_text(aqi_value), "value": aqi_value, "bad": aqi_value > 100},
+        "days": days,
+        "forecast": entries,
+        "stale": True,
     }
 
 
 # ----------------------------------------------------------------------------
 # 行情
 # ----------------------------------------------------------------------------
-
 def collect_market(name, code):
     daily_raw = get_json(
         "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get"
@@ -541,7 +624,13 @@ def main():
             result["weather"]["device"] = old_dev
         log(f"天气 {result['weather']['temp']}° {result['weather']['text']}")
     except Exception as exc:
-        log(f"天气失败，沿用旧数据: {exc}")
+        prev_w = previous.get("weather") or {}
+        rebuilt = weather_from_forecast(prev_w, now.date())
+        if rebuilt is not None:
+            result["weather"] = rebuilt
+            log(f"天气失败，改用 {now.month}月{now.day:02d}日 的预报数据: {exc}")
+        else:
+            log(f"天气失败，沿用旧数据: {exc}")
 
     try:
         result["markets"] = collect_markets()

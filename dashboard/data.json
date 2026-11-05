@@ -11,20 +11,20 @@
  },
  "lunar": "农历九月廿七 · 距立冬 2 天",
  "weather": {
-  "temp": -1,
-  "feels": -1,
+  "temp": -7,
+  "feels": -6,
   "text": "霾",
   "icon": "fog",
   "high": 13,
-  "low": -1,
+  "low": -3,
   "device": "23°C/2.9V",
-  "humidity": 55,
+  "humidity": 77,
   "wind": "西北风 3级",
   "uv": "中等",
-  "pressure": 998,
+  "pressure": 1004,
   "aqi": {
-   "text": "轻度",
-   "value": 85,
+   "text": "良",
+   "value": 55,
    "bad": false
   },
   "days": [
@@ -33,7 +33,7 @@
     "text": "霾",
     "icon": "fog",
     "high": 13,
-    "low": -1
+    "low": -3
    },
    {
     "label": "明天",
@@ -49,12 +49,134 @@
     "high": 2,
     "low": -6
    }
+  ],
+  "forecast": [
+   {
+    "date": "2026-11-05",
+    "text": "霾",
+    "high": 13,
+    "low": -3,
+    "wind": "西北风 3级",
+    "aqi": 55
+   },
+   {
+    "date": "2026-11-06",
+    "text": "晴",
+    "high": 4,
+    "low": -4,
+    "wind": "西北风 2级",
+    "aqi": 47
+   },
+   {
+    "date": "2026-11-07",
+    "text": "多云",
+    "high": 2,
+    "low": -6,
+    "wind": "西北风 2级",
+    "aqi": 43
+   },
+   {
+    "date": "2026-11-08",
+    "text": "多云",
+    "high": 4,
+    "low": -4,
+    "wind": "北风 1级",
+    "aqi": 53
+   },
+   {
+    "date": "2026-11-09",
+    "text": "晴",
+    "high": 6,
+    "low": -4,
+    "wind": "西北风 2级",
+    "aqi": 71
+   },
+   {
+    "date": "2026-11-10",
+    "text": "晴",
+    "high": 10,
+    "low": -4,
+    "wind": "南风 2级",
+    "aqi": 99
+   },
+   {
+    "date": "2026-11-11",
+    "text": "霾",
+    "high": 13,
+    "low": 2,
+    "wind": "东南风 2级",
+    "aqi": 131
+   },
+   {
+    "date": "2026-11-12",
+    "text": "霾",
+    "high": 15,
+    "low": 4,
+    "wind": "南风 3级",
+    "aqi": 139
+   },
+   {
+    "date": "2026-11-13",
+    "text": "霾",
+    "high": 13,
+    "low": 2,
+    "wind": "南风 2级",
+    "aqi": 146
+   },
+   {
+    "date": "2026-11-14",
+    "text": "小雨",
+    "high": 12,
+    "low": 2,
+    "wind": "西南风 2级",
+    "aqi": 138
+   },
+   {
+    "date": "2026-11-15",
+    "text": "阴",
+    "high": 6,
+    "low": -1,
+    "wind": "西北风 3级",
+    "aqi": 66
+   },
+   {
+    "date": "2026-11-16",
+    "text": "晴",
+    "high": 5,
+    "low": -3,
+    "wind": "西南风 2级",
+    "aqi": 60
+   },
+   {
+    "date": "2026-11-17",
+    "text": "多云",
+    "high": 8,
+    "low": -2,
+    "wind": "南风 3级",
+    "aqi": 82
+   },
+   {
+    "date": "2026-11-18",
+    "text": "多云",
+    "high": 6,
+    "low": -3,
+    "wind": "西北风 3级",
+    "aqi": 79
+   },
+   {
+    "date": "2026-11-19",
+    "text": "阴",
+    "high": 8,
+    "low": -7,
+    "wind": "西北风 3级",
+    "aqi": 83
+   }
   ]
  },
  "markets": [
   {
    "name": "沪深300",
-   "price": "4111.11",
+   "price": "4113.41",
    "change": 0.29,
    "prevClose": 4101.34,
    "daily": [
@@ -1531,12 +1653,12 @@
  ],
  "breaking": [],
  "tokens": {
-  "today": 378017188,
-  "week": 3792643191,
-  "avg": 541806170,
+  "today": 467175016,
+  "week": 3881801019,
+  "avg": 554543002,
   "model": "group/deepseek-flash"
  },
- "slot": "17:19",
+ "slot": "22:23",
  "marketOpen": false,
- "tokenAt": 1793870384
+ "tokenAt": 1793885812
 }
