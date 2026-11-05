@@ -3,7 +3,7 @@
 refresh.py: 一次完整的看板刷新, 供计划任务调用.
 
     渲染 epd_update.py -> epd.png
-    推屏 host/epdash.py -> 墨水屏
+    推屏 host/epdash3.py -> 墨水屏（三色）
 
 日志写到 refresh.log, 每次运行追加, 便于排查.
 
@@ -95,6 +95,9 @@ def query_device_status():
         volt = "%.1f" % (int(fields.get("mv", 0)) / 1000.0)
     except ValueError:
         volt = "?"
+    if temp == "-99":
+        log("温度读取失败, 沿用旧值")
+        return
     status = "%s°C/%sV" % (temp, volt)
 
     path = BASE / "data.json"
@@ -123,7 +126,7 @@ def main():
         if args.render:
             log("只渲染, 不推屏")
             return
-        cmd = [sys.executable, str(ROOT / "host" / "epdash.py"), str(PNG)]
+        cmd = [sys.executable, str(ROOT / "host" / "epdash3.py"), str(PNG)]
         if args.full:
             cmd.append("--full")
         for attempt in (1, 2):
