@@ -797,8 +797,8 @@
 				const o = +b[1], c = +b[2], h = +b[3], l = +b[4];
 				const cx = Math.round(px + slot * (i + 0.5));
 				const up = c >= o;
-				// 最后一根是还在变的当日蜡烛, 固定黑色, 免得红色层每次刷新都变
-				const live = i === bars.length - 1;
+				// 盘中最后一根未收盘, 固定黑色; 收盘后按正常涨跌上色
+				const live = i === bars.length - 1 && marketOpen;
 				const col = (up && !live) ? "#d0021b" : "#000";
 				s += `<line x1="${cx}" y1="${Math.round(y(h))}" x2="${cx}" y2="${Math.round(y(l))}" stroke="${col}" stroke-width="1"/>`;
 				const top = Math.round(y(Math.max(o, c)));
@@ -923,7 +923,11 @@
 		}
 
 		/* ---------- 主渲染 ---------- */
+		let marketOpen = false;
+
 		function renderDashboard(d) {
+			// 盘中最后一根日 K 还在动, 收盘后按正常涨跌上色
+			marketOpen = !!d.marketOpen;
 			// 页眉
 			setText("d-date", d.date);
 			setText("d-week", d.week);

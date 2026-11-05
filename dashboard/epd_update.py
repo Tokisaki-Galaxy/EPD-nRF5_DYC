@@ -495,6 +495,16 @@ def shoot(png_path):
 # 主流程
 # ----------------------------------------------------------------------------
 
+def market_is_open(now):
+    """交易日且处在交易时段内才认为今天的日 K 还在动."""
+    if now.weekday() >= 5:
+        return False
+    if now.date() in {h for h, _ in HOLIDAYS}:
+        return False
+    t = now.hour * 60 + now.minute
+    return 570 <= t <= 690 or 780 <= t <= 900
+
+
 def main():
     out_png = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_PNG
     now = datetime.now()
@@ -508,6 +518,7 @@ def main():
 
     result = dict(previous)
     result["city"] = CITY
+    result["marketOpen"] = market_is_open(now)
     result["date"] = f"{now.month}月{now.day:02d}日"
     result["week"] = "周" + "一二三四五六日"[now.weekday()]
     # 无头浏览器的虚拟时钟是冻结的, 页面取不到真实时间, 刷新时刻由这里写入
