@@ -205,7 +205,13 @@ def collect_weather():
     except Exception as exc:
         log(f"体感/气压/紫外线补全失败，用温度顶替: {exc}")
 
-    days = []
+    days = [{
+        "label": "今天",
+        "text": today.get("type") or "",
+        "icon": icon_of(today.get("type") or ""),
+        "high": high,
+        "low": low,
+    }]
     for idx, label in ((1, "明天"), (2, "后天")):
         f = data["forecast"][idx]
         days.append({

@@ -96,3 +96,5 @@ host/.epdash_state.npz
 dashboard/refresh.log
 
 dashboard/__pycache__/
+
+dashboard/.last_refresh

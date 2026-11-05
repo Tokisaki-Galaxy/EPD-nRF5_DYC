@@ -113,11 +113,52 @@ def query_device_status():
     log("设备状态 %s" % status)
 
 
+def should_refresh():
+    """决定这一轮要不要真的刷新.
+
+    交易日 9:30-11:30 和 13:00-15:00 每 15 分钟一次;
+    其他时段一小时一次; 凌晨 1 点到 7 点完全不动.
+    """
+    now = datetime.now()
+    if 1 <= now.hour < 7:
+        return False, "凌晨休眠时段"
+
+    try:
+        from epd_update import HOLIDAYS
+        holiday_set = {h for h, _ in HOLIDAYS}
+    except Exception:
+        holiday_set = set()
+    is_trading_day = now.weekday() < 5 and now.date() not in holiday_set
+
+    if is_trading_day:
+        t = now.hour * 60 + now.minute
+        if 570 <= t <= 690 or 780 <= t <= 900:
+            return True, "交易时段"
+
+    last = None
+    stamp = BASE / ".last_refresh"
+    if stamp.exists():
+        try:
+            last = datetime.fromtimestamp(stamp.stat().st_mtime)
+        except Exception:
+            last = None
+    if last is None or (now - last).total_seconds() >= 3600 - 120:
+        return True, "整点档"
+    return False, "距上次刷新不足一小时"
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--full", action="store_true")
+    ap.add_argument("--force", action="store_true", help="跳过时段判断, 强制刷新")
     ap.add_argument("--render", action="store_true")
     args = ap.parse_args()
+
+    if not args.force and not args.render:
+        ok, why = should_refresh()
+        if not ok:
+            log("跳过: " + why)
+            return
 
     started = time.time()
     try:
@@ -138,6 +179,7 @@ def main():
                     raise
                 log("推屏失败, 15 秒后重试: %s" % exc)
                 time.sleep(15)
+        (BASE / ".last_refresh").touch()
         log("完成, 用时 %.1f 秒" % (time.time() - started))
     except Exception as exc:
         log("失败: %s" % exc)

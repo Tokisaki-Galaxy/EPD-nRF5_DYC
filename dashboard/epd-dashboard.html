@@ -273,7 +273,7 @@
 		.wx-days {
 			grid-column: 1 / -1;
 			display: grid;
-			grid-template-columns: 1fr 1fr;
+			grid-template-columns: 1fr 1fr 1fr;
 			column-gap: 10px;
 			border-top: 1px solid var(--ink);
 			margin-top: 3px;
@@ -963,7 +963,7 @@
 			setText("a-uv", w.uv);
 			setText("a-pres", w.pressure == null || w.pressure === "" ? "--" : w.pressure + " hPa");
 
-			$("a-days").innerHTML = (w.days || []).slice(0, 2).map((x) =>
+			$("a-days").innerHTML = (w.days || []).slice(0, 3).map((x) =>
 				`<div class="wd">` +
 				`<span class="lb">${x.label}</span>` +
 				`<span class="ic">${iconSVG(x.icon, 15)}</span>` +
