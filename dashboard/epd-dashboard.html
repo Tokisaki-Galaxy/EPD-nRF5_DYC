@@ -825,8 +825,10 @@
 			const x = (i) => px + i / (n - 1) * pw;
 			const y = (v) => py + (top - v) / (top * 2) * ph;
 
-			const zero = Math.round(y(0));
-			let s = `<line x1="${px}" y1="${zero}" x2="${px + pw}" y2="${zero}" stroke="#000" stroke-width="1" stroke-dasharray="3 3"/>`;
+			// 1px 虚线落在整数坐标上会被抗锯齿劈成两行 50% 灰, 二值化后消失,
+			// 所以偏移半像素并加粗到 2px
+			const zero = Math.round(y(0)) + 0.5;
+			let s = `<line x1="${px}" y1="${zero}" x2="${px + pw}" y2="${zero}" stroke="#000" stroke-width="2" stroke-dasharray="4 4"/>`;
 
 			const pts = pct.map((p, i) => x(i).toFixed(1) + "," + y(p).toFixed(1)).join(" ");
 			s += `<polyline points="${pts}" fill="none" stroke="#000" stroke-width="2" stroke-linejoin="miter"/>`;
