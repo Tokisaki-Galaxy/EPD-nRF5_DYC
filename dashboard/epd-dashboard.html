@@ -366,13 +366,10 @@
 		.mkt-chg {
 			margin-left: auto;
 			font-family: var(--num);
-			font-size: 11px;
+			font-size: 21px;
+			line-height: 1;
 			font-weight: 700;
 			white-space: nowrap;
-		}
-
-		.mkt-chg.up {
-			color: var(--red);
 		}
 
 		.mkt-chart {
@@ -868,7 +865,7 @@
 					`<div class="mkt-head">` +
 					`<span class="mkt-name">${escapeHTML(m.name || "")}</span>` +
 					`<span class="mkt-price">${escapeHTML(String(m.price == null ? "-" : m.price))}</span>` +
-					`<span class="mkt-chg ${up ? "up" : ""}">${up ? "▲" : "▼"}${chg}%</span>` +
+					`<span class="mkt-chg">${up ? "▲" : "▼"}${chg}%</span>` +
 					`</div>` +
 					`<div class="mkt-chart" data-k="d"></div>` +
 					`<div class="mkt-axis" data-a="d"></div>` +
