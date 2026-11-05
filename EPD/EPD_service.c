@@ -180,6 +180,7 @@ static void epd_service_on_write(ble_epd_t* p_epd, uint8_t* p_data, uint16_t len
             if (p_epd->epd) {
                 p_epd->epd->drv->init(p_epd->epd);
                 p_epd->epd->drv->clear(p_epd->epd, length > 1 ? p_data[1] : true);
+                EPD_LED_BLINK();
             }
             break;
 
@@ -194,7 +195,10 @@ static void epd_service_on_write(ble_epd_t* p_epd, uint8_t* p_data, uint16_t len
 
         case EPD_CMD_REFRESH:
             epd_update_display_mode(p_epd, MODE_PICTURE);
-            if (p_epd->epd) p_epd->epd->drv->refresh(p_epd->epd);
+            if (p_epd->epd) {
+                p_epd->epd->drv->refresh(p_epd->epd);
+                EPD_LED_BLINK();
+            }
             break;
 
         case EPD_CMD_SLEEP:
@@ -245,10 +249,9 @@ static void epd_service_on_write(ble_epd_t* p_epd, uint8_t* p_data, uint16_t len
         case EPD_CMD_REFRESH_RAW:
             EPD_WriteCmd(UC81xx_DRF);
             nrf_delay_ms(20);
-            // BUSY_N needs a moment to assert. Without this the generic wait
-            // sees an already released line and returns immediately.
             for (uint16_t i = 0; i < 500 && EPD_ReadBusy(); i++) nrf_delay_ms(1);
             EPD_WaitBusy(false, 30000);
+            EPD_LED_BLINK();
             break;
 
         case EPD_CMD_REFRESH_TIMED: {
@@ -263,6 +266,7 @@ static void epd_service_on_write(ble_epd_t* p_epd, uint8_t* p_data, uint16_t len
             char buf[24] = {0};
             snprintf(buf, sizeof(buf), "ms=%lu", (unsigned long)ms);
             ble_epd_string_send(p_epd, (uint8_t*)buf, strlen(buf));
+            EPD_LED_BLINK();
             break;
         }
 

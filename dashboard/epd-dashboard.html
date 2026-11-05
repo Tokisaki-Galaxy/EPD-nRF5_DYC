@@ -957,7 +957,7 @@
 
 			$("a-hl").innerHTML = w.high + "°<i>/</i>" + w.low + "°";
 			setText("a-feels", w.feels + "°");
-			setText("a-dev", w.device == null || w.device === "" ? "XX°" : w.device + "°");
+			setText("a-dev", w.device == null || w.device === "" ? "N/A" : w.device);
 			setText("a-hum", w.humidity + "%");
 			setText("a-wind", w.wind);
 			setText("a-uv", w.uv);

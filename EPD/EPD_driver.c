@@ -101,7 +101,8 @@ void EPD_GPIO_Init(void) {
 
     if (EPD_LED_PIN != 0xFF) pinMode(EPD_LED_PIN, OUTPUT);
 
-    EPD_LED_ON();
+    // The LED stays off; it only blinks once after a finished refresh.
+    EPD_LED_OFF();
 }
 
 void EPD_GPIO_Uninit(void) {
@@ -205,13 +206,10 @@ void EPD_KeepPanelRam(void) {
 }
 
 void EPD_WaitBusy(bool status, uint16_t timeout) {
-    uint32_t led_status = digitalRead(EPD_LED_PIN);
-
     EPD_DEBUG("check busy");
     while (EPD_ReadBusy() == status) {
         if (timeout % 100 == 0) {
             app_feed_wdt();
-            EPD_LED_Toggle();
         }
         delay(1);
         timeout--;
@@ -221,12 +219,6 @@ void EPD_WaitBusy(bool status, uint16_t timeout) {
         }
     }
     EPD_DEBUG("busy release");
-
-    // restore led status
-    if (led_status == LOW)
-        EPD_LED_ON();
-    else
-        EPD_LED_OFF();
 }
 
 // lED
@@ -249,7 +241,8 @@ void EPD_LED_BLINK(void) {
         delay(100);
         digitalWrite(EPD_LED_PIN, HIGH);
         delay(100);
-        pinMode(EPD_LED_PIN, DEFAULT);
+        // keep driving the pin so the LED stays off instead of floating
+        digitalWrite(EPD_LED_PIN, HIGH);
     }
 }
 

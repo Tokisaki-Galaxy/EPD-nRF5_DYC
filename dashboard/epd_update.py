@@ -514,6 +514,10 @@ def main():
 
     try:
         result["weather"] = collect_weather()
+        # 保留设备状态字段, 它是刷新前从设备读的
+        old_dev = (previous.get("weather") or {}).get("device")
+        if old_dev is not None:
+            result["weather"]["device"] = old_dev
         log(f"天气 {result['weather']['temp']}° {result['weather']['text']}")
     except Exception as exc:
         log(f"天气失败，沿用旧数据: {exc}")
