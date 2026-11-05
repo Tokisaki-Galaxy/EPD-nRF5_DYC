@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 """
 三色看板更新器.
 
@@ -16,6 +16,7 @@
 import argparse
 import asyncio
 import sys
+import time
 from pathlib import Path
 
 import numpy as np
@@ -45,6 +46,56 @@ RED = [0xCC, 0x0F, 0x0F, 0x0F, 0x0F, 0x01] + [0] * 54
 
 def pkt(cmd, payload=b""):
     return bytes([cmd]) + bytes(payload)
+
+
+def rle_encode(data):
+    """固件 RLE 格式: 高位 1 是重复段, 长度 = 低位 + 3; 高位 0 是字面段, 长度 = 值 + 1."""
+    out = bytearray()
+    i = 0
+    n = len(data)
+    while i < n:
+        j = i
+        while j < n and data[j] == data[i] and j - i < 130:
+            j += 1
+        run = j - i
+        if run >= 3:
+            out.append(0x80 | (run - 3))
+            out.append(data[i])
+            i = j
+            continue
+        start = i
+        while i < n and i - start < 128:
+            if i + 2 < n and data[i] == data[i + 1] == data[i + 2]:
+                break
+            i += 1
+        count = i - start
+        out.append(count - 1)
+        out += data[start:i]
+    return bytes(out)
+
+
+def rle_chunks(enc, limit):
+    """按完整 token 切段, 每个 BLE 写必须自带完整压缩序列."""
+    segs = []
+    cur = bytearray()
+    i = 0
+    n = len(enc)
+    while i < n:
+        c = enc[i]
+        if c & 0x80:
+            tok = enc[i:i + 2]
+            i += 2
+        else:
+            cnt = c + 1
+            tok = enc[i:i + 1 + cnt]
+            i += 1 + cnt
+        if len(cur) + len(tok) > limit:
+            segs.append(bytes(cur))
+            cur = bytearray()
+        cur += tok
+    if cur:
+        segs.append(bytes(cur))
+    return segs
 
 
 def load_layers(path):
@@ -118,6 +169,16 @@ class Panel:
             await self.c.write_gatt_char(CMD, pkt(0x04, data[i:i + 200]), response=True)
         return len(data)
 
+    async def send_rle(self, data, black):
+        """用 0x30 的压缩写入. begin=0 避免窗口被重置成全屏."""
+        enc = rle_encode(data)
+        flags = 0x04 if black else 0x05
+        sent = 0
+        for seg in rle_chunks(enc, 240):
+            await self.c.write_gatt_char(CMD, bytes([0x30, flags]) + seg, response=True)
+            sent += len(seg)
+        return sent, len(data)
+
     async def lut(self):
         await self.panel(0x20, VCOM)
         await self.panel(0x22, RED)
@@ -186,17 +247,25 @@ async def push(old, new, force_full, otp=False):
 
         if do_full:
             await p.window(0, 0, W - 1, H - 1)
+            tx0 = time.time()
             await p.panel(0x10)
-            sent = await p.send(bw.tobytes())
+            sent, raw = await p.send_rle(bw.tobytes(), True)
             await p.panel(0x13)
-            sent += await p.send(red.tobytes())
+            s2, r2 = await p.send_rle(red.tobytes(), False)
+            sent += s2
+            raw += r2
+            tx = time.time() - tx0
         else:
             await p.panel(0x91)
             await p.window(*box)
+            tx0 = time.time()
             await p.panel(0x10)
-            sent = await p.send(crop(bw, *box))
+            sent, raw = await p.send_rle(crop(bw, *box), True)
             await p.panel(0x13)
-            sent += await p.send(crop(red, *box))
+            s2, r2 = await p.send_rle(crop(red, *box), False)
+            sent += s2
+            raw += r2
+            tx = time.time() - tx0
 
         ms = await p.refresh()
         if not do_full:
@@ -205,7 +274,8 @@ async def push(old, new, force_full, otp=False):
             except Exception:
                 # 掉线只丢掉 PTOUT, 刷新本身已完成, 状态照常保存
                 pass
-        print("刷新 %d ms, 传输 %d 字节" % (ms, sent))
+        print("刷新 %d ms, 传输 %.1f 秒, 原始 %d 字节, 压缩后 %d 字节 (%.1f%%)"
+              % (ms, tx, raw, sent, 100.0 * sent / raw if raw else 0))
         np.savez(STATE, bw=bw, red=red, count=(0 if do_full else count + 1))
     finally:
         await client.disconnect()
@@ -237,3 +307,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
