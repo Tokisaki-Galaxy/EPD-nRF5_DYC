@@ -25,6 +25,7 @@ import sqlite3
 import subprocess
 import sys
 import tempfile
+import time
 from datetime import date, datetime, timedelta
 from email.utils import parsedate_to_datetime
 from pathlib import Path
@@ -554,8 +555,15 @@ def main():
         log(f"突发失败，沿用旧数据: {exc}")
 
     try:
-        result["tokens"] = collect_tokens()
-        log(f"Token 今日 {result['tokens']['today']:,}，模型 {result['tokens']['model']}")
+        # token 在页面最底部, 每 15 分钟都变会把差分框拉成整条竖带,
+        # 所以只在距上次采集满 55 分钟时才更新
+        last_token = previous.get("tokenAt") or 0
+        if previous.get("tokens") and time.time() - last_token < 3300:
+            log("Token 沿用上次, 未到整点更新")
+        else:
+            result["tokens"] = collect_tokens()
+            result["tokenAt"] = int(time.time())
+            log(f"Token 今日 {result['tokens']['today']:,}，模型 {result['tokens']['model']}")
     except Exception as exc:
         log(f"Token 失败，沿用旧数据: {exc}")
 

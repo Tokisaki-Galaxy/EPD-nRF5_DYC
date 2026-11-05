@@ -183,8 +183,8 @@ class Panel:
     async def lut(self):
         await self.panel(0x20, VCOM)
         await self.panel(0x22, RED)
-        await self.panel(0x23, WW)
-        await self.panel(0x24, BB)
+        await self.panel(0x23, WW + [0] * 18)
+        await self.panel(0x24, BB + [0] * 18)
         await self.panel(0x25, [0] * 42)
 
     async def mode_kw(self):
@@ -193,8 +193,8 @@ class Panel:
         await self.panel(0x50, [0xA9, 0x07])
         await self.panel(0x20, VCOM)
         await self.panel(0x21, [0] * 42)
-        await self.panel(0x22, WW)
-        await self.panel(0x23, BB)
+        await self.panel(0x22, WW + [0] * 18)
+        await self.panel(0x23, BB + [0] * 18)
         await self.panel(0x24, [0] * 60)
         await self.panel(0x25, [0] * 42)
 
