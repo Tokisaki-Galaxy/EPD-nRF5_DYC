@@ -279,26 +279,19 @@ static void epd_service_on_write(ble_epd_t* p_epd, uint8_t* p_data, uint16_t len
 
         case EPD_CMD_PROBE: {
             char buf[40] = {0};
-            uint16_t v = EPD_ReadVoltage();
-            int8_t t;
-            if (p_epd->epd) {
-                t = p_epd->epd->drv->read_temp(p_epd->epd);
-            } else {
-                // The host probes the status before the first transfer of a
-                // session, so read the sensor without a full panel init. PON
-                // is needed to wake the temperature sensor, POF keeps the
-                // frame buffers untouched.
-                EPD_GPIO_Init();
-                EPD_WriteCmd(UC81xx_PON);
-                EPD_WaitBusy(false, 200);
-                EPD_WriteCmd(UC81xx_TSC);
-                EPD_WaitBusy(false, 100);
-                EPD_WriteCmd(UC81xx_TSC);
-                EPD_WaitBusy(false, 100);
-                t = (int8_t)EPD_ReadByte();
-                EPD_WriteCmd(UC81xx_POF);
-                EPD_WaitBusy(false, 200);
+            if (p_epd->epd == NULL) {
+                // The host probes before the first transfer of a session.
+                // Initialize the panel so the temperature sensor answers;
+                // the reset is harmless because the RAM state is reported
+                // as invalid anyway and the host will do a full refresh.
+                p_epd->epd = epd_init((epd_model_id_t)p_epd->config.model_id);
+                if (p_epd->epd->id != p_epd->config.model_id) {
+                    p_epd->config.model_id = p_epd->epd->id;
+                    epd_config_write(&p_epd->config);
+                }
             }
+            int8_t t = p_epd->epd->drv->read_temp(p_epd->epd);
+            uint16_t v = EPD_ReadVoltage();
             snprintf(buf, sizeof(buf), "temp=%d mv=%d", t, v);
             ble_epd_string_send(p_epd, (uint8_t*)buf, strlen(buf));
             break;

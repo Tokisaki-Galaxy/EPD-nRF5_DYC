@@ -4,8 +4,8 @@
 
 - 从 PNG 提取黑白层和红色层
 - 两层一起差分, 取并集包围盒
-- 窗口内用三色寄存器波形刷新, 约 2.6 秒
-- 窗口外完全不驱动
+- 默认用面板自带 OTP 波形, 整屏 17.9 秒, 窗口刷新只闪窗口, 红色准确
+- --fast 用自写寄存器波形, 2.6 秒, 但红色驱动力不足
 
 用法:
     python epdash3.py image.png
@@ -200,7 +200,11 @@ async def push(old, new, force_full, otp=False):
 
         ms = await p.refresh()
         if not do_full:
-            await p.panel(0x92)
+            try:
+                await p.panel(0x92)
+            except Exception:
+                # 掉线只丢掉 PTOUT, 刷新本身已完成, 状态照常保存
+                pass
         print("刷新 %d ms, 传输 %d 字节" % (ms, sent))
         np.savez(STATE, bw=bw, red=red, count=(0 if do_full else count + 1))
     finally:
@@ -211,7 +215,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("image")
     ap.add_argument("--full", action="store_true")
-    ap.add_argument("--otp", action="store_true", help="用面板自带三色波形, 17 秒, 红色最正")
+    ap.add_argument("--fast", action="store_true",
+                    help="用自写寄存器波形, 2.6 秒, 但红色驱动力不足, 慎用")
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
 
@@ -227,7 +232,7 @@ def main():
             old = (d["bw"], d["red"])
         except Exception:
             old = None
-    asyncio.run(push(old, (bw, red), args.full, args.otp))
+    asyncio.run(push(old, (bw, red), args.full, not args.fast))
 
 
 if __name__ == "__main__":

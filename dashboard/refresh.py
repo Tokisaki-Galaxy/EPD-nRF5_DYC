@@ -136,8 +136,8 @@ def main():
             except Exception as exc:
                 if attempt == 2:
                     raise
-                log("推屏失败, 5 秒后重试: %s" % exc)
-                time.sleep(5)
+                log("推屏失败, 15 秒后重试: %s" % exc)
+                time.sleep(15)
         log("完成, 用时 %.1f 秒" % (time.time() - started))
     except Exception as exc:
         log("失败: %s" % exc)
