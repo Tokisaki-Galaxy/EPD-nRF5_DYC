@@ -91,10 +91,14 @@ _build/
 RTE_Components.h
 EventRecorderStub.scvd
 JLinkLog.txt
-host/.epdash_state.npz
 
+# Python 缓存
+__pycache__/
+*.pyc
+
+# 看板运行期产物, 每次刷新都会重写
+dashboard/data.json
+dashboard/epd.png
 dashboard/refresh.log
-
-dashboard/__pycache__/
-
 dashboard/.last_refresh
+host/.epdash*state.npz
