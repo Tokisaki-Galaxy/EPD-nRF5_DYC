@@ -579,14 +579,17 @@ def shoot(png_path):
 # 主流程
 # ----------------------------------------------------------------------------
 
-def market_is_open(now):
-    """交易日且处在交易时段内才认为今天的日 K 还在动."""
+def daily_bar_is_live(now):
+    """今天这根日 K 是否还没收盘.
+
+    午休 11:30-13:00 期间当天的 K 线一样没定型, 不能按盘中时段判断,
+    只有过了 15:00 或者非交易日, 最后一根才算收盘价.
+    """
     if now.weekday() >= 5:
         return False
     if now.date() in {h for h, _ in HOLIDAYS}:
         return False
-    t = now.hour * 60 + now.minute
-    return 570 <= t <= 690 or 780 <= t <= 900
+    return now.hour * 60 + now.minute < 900
 
 
 def main():
@@ -602,7 +605,9 @@ def main():
 
     result = dict(previous)
     result["city"] = CITY
-    result["marketOpen"] = market_is_open(now)
+    result["barLive"] = daily_bar_is_live(now)
+    result["today"] = now.date().isoformat()
+    result.pop("marketOpen", None)
     result["date"] = f"{now.month}月{now.day:02d}日"
     result["week"] = "周" + "一二三四五六日"[now.weekday()]
     # 无头浏览器的虚拟时钟是冻结的, 页面取不到真实时间, 刷新时刻由这里写入
